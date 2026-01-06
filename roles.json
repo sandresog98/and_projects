@@ -1,0 +1,168 @@
+{
+    "admin": {
+        "descripcion": "Administrador del sistema - Acceso total",
+        "interface": "ui",
+        "modulos": {
+            "dashboard": {
+                "ver": true
+            },
+            "empresas": {
+                "ver": true,
+                "crear": true,
+                "editar": true,
+                "eliminar": true
+            },
+            "usuarios": {
+                "ver": true,
+                "crear": true,
+                "editar": true,
+                "eliminar": true
+            },
+            "proyectos": {
+                "ver": true,
+                "crear": true,
+                "editar": true,
+                "eliminar": true
+            },
+            "tareas": {
+                "ver": true,
+                "crear": true,
+                "editar": true,
+                "eliminar": true
+            },
+            "subtareas": {
+                "ver": true,
+                "crear": true,
+                "editar": true,
+                "eliminar": true
+            },
+            "reuniones": {
+                "ver": true,
+                "crear": true,
+                "editar": true,
+                "eliminar": true
+            },
+            "comentarios": {
+                "ver": true,
+                "crear": true,
+                "editar": true,
+                "eliminar": true
+            },
+            "adjuntos": {
+                "ver": true,
+                "crear": true,
+                "eliminar": true
+            },
+            "reportes": {
+                "ver": true
+            }
+        }
+    },
+    "colaborador": {
+        "descripcion": "Colaborador - Gestiona proyectos y tareas asignadas",
+        "interface": "ui",
+        "modulos": {
+            "dashboard": {
+                "ver": true
+            },
+            "empresas": {
+                "ver": true,
+                "crear": false,
+                "editar": false,
+                "eliminar": false
+            },
+            "usuarios": {
+                "ver": true,
+                "crear": false,
+                "editar": false,
+                "eliminar": false
+            },
+            "proyectos": {
+                "ver": true,
+                "crear": true,
+                "editar": true,
+                "eliminar": false
+            },
+            "tareas": {
+                "ver": true,
+                "crear": true,
+                "editar": true,
+                "eliminar": false
+            },
+            "subtareas": {
+                "ver": true,
+                "crear": true,
+                "editar": true,
+                "eliminar": false
+            },
+            "reuniones": {
+                "ver": true,
+                "crear": true,
+                "editar": true,
+                "eliminar": false
+            },
+            "comentarios": {
+                "ver": true,
+                "crear": true,
+                "editar": true,
+                "eliminar": false
+            },
+            "adjuntos": {
+                "ver": true,
+                "crear": true,
+                "eliminar": false
+            },
+            "reportes": {
+                "ver": true
+            }
+        }
+    },
+    "cliente": {
+        "descripcion": "Cliente - Solo visualización y comentarios",
+        "interface": "cx",
+        "modulos": {
+            "dashboard": {
+                "ver": true
+            },
+            "proyectos": {
+                "ver": true,
+                "crear": false,
+                "editar": false,
+                "eliminar": false
+            },
+            "tareas": {
+                "ver": true,
+                "crear": false,
+                "editar": false,
+                "eliminar": false
+            },
+            "subtareas": {
+                "ver": true,
+                "crear": false,
+                "editar": false,
+                "eliminar": false
+            },
+            "reuniones": {
+                "ver": true,
+                "crear": false,
+                "editar": false,
+                "eliminar": false
+            },
+            "comentarios": {
+                "ver": true,
+                "crear": true,
+                "editar": false,
+                "eliminar": false
+            },
+            "adjuntos": {
+                "ver": true,
+                "crear": false,
+                "eliminar": false
+            },
+            "calendario": {
+                "ver": true
+            }
+        }
+    }
+}
+

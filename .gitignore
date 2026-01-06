@@ -1,0 +1,93 @@
+# =====================================================
+# AND PROJECTS APP - Git Ignore
+# =====================================================
+
+# =====================================================
+# ARCHIVOS DE ENTORNO Y CONFIGURACIÓN SENSIBLE
+# =====================================================
+.env
+*.env
+!.env.example
+
+# =====================================================
+# ARCHIVOS SUBIDOS POR USUARIOS
+# =====================================================
+/uploads/*
+!/uploads/.gitkeep
+!/uploads/adjuntos/.gitkeep
+!/uploads/empresas/.gitkeep
+
+# =====================================================
+# DEPENDENCIAS Y VENDORS
+# =====================================================
+/vendor/
+/node_modules/
+composer.lock
+package-lock.json
+
+# =====================================================
+# LOGS Y CACHE
+# =====================================================
+*.log
+/logs/*
+!/logs/.gitkeep
+/cache/*
+!/cache/.gitkeep
+/tmp/*
+!/tmp/.gitkeep
+
+# =====================================================
+# IDE Y EDITORES
+# =====================================================
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# =====================================================
+# SISTEMA OPERATIVO
+# =====================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# =====================================================
+# ARCHIVOS TEMPORALES DE PHP
+# =====================================================
+*.cache
+*.tmp
+sessions/*
+!sessions/.gitkeep
+
+# =====================================================
+# BACKUPS DE BASE DE DATOS
+# =====================================================
+*.sql.gz
+*.sql.bak
+/sql/backups/*
+!/sql/backups/.gitkeep
+
+# =====================================================
+# ARCHIVOS DE PRUEBA
+# =====================================================
+/tests/coverage/
+phpunit.xml
+.phpunit.result.cache
+
+# =====================================================
+# OTROS
+# =====================================================
+*.bak
+*.backup
+*.old
+
+
