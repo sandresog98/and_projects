@@ -476,31 +476,9 @@
     opacity: 0.4;
 }
 
-/* Glow en table rows */
-.table tbody tr {
-    position: relative;
-}
-
-.table tbody tr::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: conic-gradient(
-        from var(--glow-angle, 0deg),
-        rgba(255,255,255,0.1),
-        rgba(107,114,128,0.1),
-        rgba(30,58,95,0.1),
-        rgba(127,29,29,0.1),
-        rgba(255,255,255,0.1)
-    );
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    animation: glow-rotate 6s linear infinite;
-    pointer-events: none;
-}
-
-.table tbody tr:hover::before {
-    opacity: 1;
+/* Hover en table rows - sin pseudo-elementos que causan problemas */
+.table-hover tbody tr {
+    transition: background 0.3s ease;
 }
 
 /* Glow en modal */
