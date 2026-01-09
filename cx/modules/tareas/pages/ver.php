@@ -6,10 +6,12 @@
 require_once __DIR__ . '/../../../../ui/modules/tareas/models/TareaModel.php';
 require_once __DIR__ . '/../../../../ui/modules/subtareas/models/SubtareaModel.php';
 require_once __DIR__ . '/../../../../ui/modules/comentarios/models/ComentarioModel.php';
+require_once __DIR__ . '/../../../../ui/models/TiempoModel.php';
 
 $tareaModel = new TareaModel();
 $subtareaModel = new SubtareaModel();
 $comentarioModel = new ComentarioModel();
+$tiempoModel = new TiempoModel();
 
 $id = (int)($_GET['id'] ?? 0);
 $empresaId = getCurrentClientEmpresaId();
@@ -71,6 +73,10 @@ if ($tarea['estado'] == 3) {
     // Sin subtareas y no completada
     $avanceTarea = $tarea['estado'] == 2 ? 50 : 0; // En progreso = 50%, pendiente = 0%
 }
+
+// Obtener horas de la tarea
+$horasTarea = $tiempoModel->getHorasTarea($id);
+$porcentajeHoras = TiempoModel::calcularPorcentaje($horasTarea['horas_reales'], $horasTarea['horas_estimadas']);
 
 // Funciones helper
 if (!function_exists('getStatusText')) {
@@ -151,6 +157,42 @@ if (!function_exists('getPriorityClass')) {
         </div>
     </div>
 </div>
+
+<!-- Barra de Avance de Horas -->
+<?php if ($horasTarea['horas_estimadas'] > 0 || $horasTarea['horas_reales'] > 0): ?>
+<div class="card mb-4 fade-in-up">
+    <div class="card-body py-3">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-clock-history fs-4" style="color: var(--accent-info);"></i>
+                    <span class="fw-medium" style="color: var(--text-primary);">Horas de la Tarea</span>
+                </div>
+            </div>
+            <div class="col">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="progress flex-grow-1" style="height: 10px; max-width: 300px;">
+                        <div class="progress-bar <?= $porcentajeHoras > 100 ? 'bg-danger' : '' ?>" style="width: <?= min($porcentajeHoras, 100) ?>%"></div>
+                    </div>
+                    <span class="text-muted"><?= $porcentajeHoras ?>%</span>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="d-flex gap-4">
+                    <div class="text-center">
+                        <div class="h5 mb-0" style="color: var(--accent-info);"><?= TiempoModel::formatHoras($horasTarea['horas_reales']) ?></div>
+                        <small class="text-muted">Registradas</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="h5 mb-0" style="color: var(--accent-warning);"><?= TiempoModel::formatHoras($horasTarea['horas_estimadas']) ?></div>
+                        <small class="text-muted">Estimadas</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="row g-4">
     <!-- Información principal -->
@@ -311,7 +353,7 @@ if (!function_exists('getPriorityClass')) {
         </div>
         
         <!-- Progreso visual -->
-        <div class="card fade-in-up">
+        <div class="card mb-4 fade-in-up">
             <div class="card-header">
                 <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Progreso</h6>
             </div>
@@ -338,6 +380,41 @@ if (!function_exists('getPriorityClass')) {
                         <small class="text-muted">Pendientes</small>
                     </div>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Resumen de Horas -->
+        <div class="card fade-in-up">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Horas</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <div class="h4 mb-0" style="color: var(--accent-info);"><?= TiempoModel::formatHoras($horasTarea['horas_reales']) ?></div>
+                        <small class="text-muted">Registradas</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="h4 mb-0" style="color: var(--accent-warning);"><?= TiempoModel::formatHoras($horasTarea['horas_estimadas']) ?></div>
+                        <small class="text-muted">Estimadas</small>
+                    </div>
+                </div>
+                
+                <?php if ($horasTarea['horas_estimadas'] > 0): ?>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-grow-1" style="height: 8px;">
+                        <div class="progress-bar <?= $porcentajeHoras > 100 ? 'bg-danger' : '' ?>" style="width: <?= min($porcentajeHoras, 100) ?>%"></div>
+                    </div>
+                    <small class="text-muted"><?= $porcentajeHoras ?>%</small>
+                </div>
+                <p class="text-muted small mt-2 mb-0 text-center">
+                    <?php if ($porcentajeHoras > 100): ?>
+                    <i class="bi bi-exclamation-triangle text-danger me-1"></i>Horas excedidas
+                    <?php else: ?>
+                    Horas consumidas
+                    <?php endif; ?>
+                </p>
+                <?php endif; ?>
             </div>
         </div>
     </div>

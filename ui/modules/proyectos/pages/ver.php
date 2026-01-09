@@ -7,11 +7,13 @@ require_once __DIR__ . '/../models/ProyectoModel.php';
 require_once __DIR__ . '/../../tareas/models/TareaModel.php';
 require_once __DIR__ . '/../../subtareas/models/SubtareaModel.php';
 require_once __DIR__ . '/../../comentarios/models/ComentarioModel.php';
+require_once __DIR__ . '/../../../models/TiempoModel.php';
 
 $model = new ProyectoModel();
 $tareaModel = new TareaModel();
 $subtareaModel = new SubtareaModel();
 $comentarioModel = new ComentarioModel();
+$tiempoModel = new TiempoModel();
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
@@ -44,6 +46,10 @@ $tareasCompletadas = count(array_filter($tareas, fn($t) => $t['estado'] == 3));
 $tareasEnProgreso = count(array_filter($tareas, fn($t) => $t['estado'] == 2));
 $tareasPendientes = count(array_filter($tareas, fn($t) => $t['estado'] == 1));
 $avance = $totalTareas > 0 ? round(($tareasCompletadas / $totalTareas) * 100) : 0;
+
+// Obtener horas del proyecto
+$horasProyecto = $tiempoModel->getHorasProyecto($id);
+$porcentajeHoras = TiempoModel::calcularPorcentaje($horasProyecto['horas_reales'], $horasProyecto['horas_estimadas']);
 
 // Procesar nuevo comentario
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comentario'])) {
@@ -121,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comentario'])) {
     <div class="col-6 col-lg-3 fade-in-up" style="animation-delay: 0.3s">
         <div class="card h-100">
             <div class="card-body text-center">
-                <div class="stat-value" style="color: var(--secondary-green);"><?= $tareasCompletadas ?></div>
+                <div class="stat-value" style="color: var(--accent-success);"><?= $tareasCompletadas ?></div>
                 <div class="stat-label">Completadas</div>
             </div>
         </div>
@@ -130,8 +136,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comentario'])) {
     <div class="col-6 col-lg-3 fade-in-up" style="animation-delay: 0.4s">
         <div class="card h-100">
             <div class="card-body text-center">
-                <div class="stat-value" style="color: var(--primary-blue);"><?= $tareasEnProgreso ?></div>
+                <div class="stat-value" style="color: var(--accent-info);"><?= $tareasEnProgreso ?></div>
                 <div class="stat-label">En Progreso</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumen de Horas -->
+<div class="row g-4 mb-4">
+    <div class="col-12 fade-in-up" style="animation-delay: 0.45s">
+        <div class="card">
+            <div class="card-body py-3">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-clock-history fs-4" style="color: var(--accent-info);"></i>
+                            <span class="fw-medium" style="color: var(--text-primary);">Horas del Proyecto</span>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="progress flex-grow-1" style="height: 10px; max-width: 300px;">
+                                <div class="progress-bar <?= $porcentajeHoras > 100 ? 'bg-danger' : '' ?>" style="width: <?= min($porcentajeHoras, 100) ?>%"></div>
+                            </div>
+                            <span class="text-muted"><?= $porcentajeHoras ?>%</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <div class="d-flex gap-4">
+                            <div class="text-center">
+                                <div class="h5 mb-0" style="color: var(--accent-info);"><?= TiempoModel::formatHoras($horasProyecto['horas_reales']) ?></div>
+                                <small class="text-muted">Registradas</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="h5 mb-0" style="color: var(--accent-warning);"><?= TiempoModel::formatHoras($horasProyecto['horas_estimadas']) ?></div>
+                                <small class="text-muted">Estimadas</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -50,226 +50,371 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark">
     <title>Acceso Clientes - <?= APP_NAME ?></title>
     
+    <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="<?= assetUrl('favicons/favicon.ico') ?>">
+    
+    <!-- Google Fonts - Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5.3 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     
+    <!-- tsParticles -->
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
+    
     <style>
-        :root {
-            --primary-color: #6A0DAD;
-            --secondary-color: #8A2BE2;
-            --accent-color: #DA70D6;
-            --text-light: #E0E0E0;
-            --text-dark: #FFFFFF;
-            --bg-dark: #1A1A2E;
-            --bg-card-dark: #16213E;
-            --border-dark: #0F3460;
-            --input-bg-dark: #0F3460;
-        }
-        
         * {
             font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
         body {
             min-height: 100vh;
-            background: linear-gradient(135deg, var(--bg-dark) 0%, #0F0F1A 100%);
+            background: #000;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-light);
+            color: white;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Partículas */
+        #tsparticles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        /* Gradiente overlay */
+        .gradient-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.7) 70%, #000 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        /* Container principal */
+        .login-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 460px;
             padding: 20px;
         }
         
-        .login-container {
-            width: 100%;
-            max-width: 420px;
-        }
-        
+        /* Card de login */
         .login-card {
-            background: var(--bg-card-dark);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 50px 40px;
+            animation: cardEnter 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
         }
         
+        @keyframes cardEnter {
+            0% {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        /* Logo */
         .login-logo {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
         
         .login-logo img {
-            max-width: 180px;
+            width: 200px;
             height: auto;
+            filter: brightness(0) invert(1);
+            animation: logoFloat 3s ease-in-out infinite;
         }
         
-        .login-header {
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        /* Badge de cliente */
+        .client-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            color: #999;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Título */
+        .login-title {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
         }
         
-        .login-header h2 {
+        .login-title h2 {
+            font-size: 28px;
             font-weight: 700;
-            font-size: 24px;
-            color: var(--text-dark);
+            color: #fff;
             margin-bottom: 8px;
         }
         
-        .login-header p {
-            color: var(--text-light);
-            opacity: 0.8;
+        .login-title p {
+            color: #555;
             font-size: 14px;
         }
         
+        /* Separador */
+        .login-divider {
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+            margin: 25px auto 35px;
+        }
+        
+        /* Form */
         .form-label {
             font-weight: 600;
-            color: var(--text-light);
-            font-size: 14px;
+            color: #999;
+            margin-bottom: 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .form-control {
-            background: var(--input-bg-dark);
-            border: 2px solid var(--border-dark);
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            padding: 14px 16px;
-            color: var(--text-light);
+            padding: 16px 20px;
             font-size: 15px;
-        }
-        
-        .form-control:focus {
-            background: var(--input-bg-dark);
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 4px rgba(218, 112, 214, 0.15);
-            color: var(--text-light);
-        }
-        
-        .form-control::placeholder {
-            color: var(--text-light);
-            opacity: 0.5;
-        }
-        
-        .input-group-text {
-            background: var(--input-bg-dark);
-            border: 2px solid var(--border-dark);
-            border-right: none;
-            border-radius: 12px 0 0 12px;
-            color: var(--text-light);
-        }
-        
-        .input-group .form-control {
-            border-radius: 0 12px 12px 0;
-            border-left: none;
-        }
-        
-        .input-group:focus-within .input-group-text {
-            border-color: var(--accent-color);
-        }
-        
-        .btn-login {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            border: none;
-            border-radius: 12px;
-            padding: 14px;
-            font-weight: 600;
-            font-size: 16px;
-            color: white;
-            width: 100%;
+            color: #fff;
             transition: all 0.3s ease;
         }
         
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(106, 13, 173, 0.4);
-            color: white;
+        .form-control:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
+            color: #fff;
         }
         
-        .alert {
+        .form-control::placeholder {
+            color: #444;
+        }
+        
+        .input-group-text {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-right: none;
+            border-radius: 12px 0 0 12px;
+            color: #666;
+            padding: 0 16px;
+        }
+        
+        .input-group .form-control {
+            border-left: none;
+            border-radius: 0 12px 12px 0;
+        }
+        
+        .input-group:focus-within .input-group-text {
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #999;
+        }
+        
+        /* Botón login */
+        .btn-login {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 12px;
-            border: none;
+            padding: 16px;
+            font-weight: 600;
             font-size: 14px;
+            color: #fff;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
         }
         
-        .alert-danger {
-            background: rgba(220, 53, 69, 0.2);
-            color: #ff7b7b;
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-login:hover {
+            background: #fff;
+            border-color: #fff;
+            color: #000;
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-login:hover::before {
+            left: 100%;
+        }
+        
+        /* Password toggle */
+        .password-wrapper {
+            position: relative;
         }
         
         .password-toggle {
             position: absolute;
-            right: 15px;
+            right: 16px;
             top: 50%;
             transform: translateY(-50%);
             cursor: pointer;
-            color: var(--text-light);
+            color: #444;
             z-index: 10;
+            transition: color 0.3s;
         }
         
-        .client-badge {
-            display: inline-block;
-            background: rgba(154, 208, 130, 0.2);
-            color: #9AD082;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 15px;
+        .password-toggle:hover {
+            color: #fff;
         }
         
+        /* Alert */
+        .alert {
+            border: none;
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 14px;
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+        
+        /* Link colaboradores */
         .collaborator-link {
             text-align: center;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-dark);
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
         
         .collaborator-link a {
-            color: var(--text-light);
-            font-size: 13px;
+            color: #444;
+            font-size: 12px;
             text-decoration: none;
-            opacity: 0.7;
-            transition: opacity 0.3s;
+            transition: color 0.3s;
+            letter-spacing: 1px;
         }
         
         .collaborator-link a:hover {
-            opacity: 1;
-            color: var(--accent-color);
+            color: #fff;
+        }
+        
+        /* Footer */
+        .login-footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #333;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 40px 25px;
+            }
+            
+            .login-logo img {
+                width: 160px;
+            }
+            
+            .login-title h2 {
+                font-size: 24px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Partículas -->
+    <div id="tsparticles"></div>
+    
+    <!-- Gradiente overlay -->
+    <div class="gradient-overlay"></div>
+    
+    <!-- Login Container -->
     <div class="login-container">
         <div class="login-card">
+            <!-- Logo -->
             <div class="login-logo">
                 <img src="<?= assetUrl('img/logo-horizontal-white.png') ?>" alt="<?= APP_NAME ?>">
             </div>
             
-            <div class="login-header">
-                <span class="client-badge"><i class="bi bi-building me-1"></i> Portal de Clientes</span>
+            <!-- Badge -->
+            <div class="text-center">
+                <span class="client-badge">
+                    <i class="bi bi-building me-1"></i> Portal de Clientes
+                </span>
+            </div>
+            
+            <!-- Título -->
+            <div class="login-title">
                 <h2>Bienvenido</h2>
                 <p>Accede para ver el progreso de tus proyectos</p>
             </div>
             
+            <div class="login-divider"></div>
+            
+            <!-- Error -->
             <?php if ($error): ?>
-            <div class="alert alert-danger mb-4">
-                <i class="bi bi-exclamation-circle me-2"></i><?= htmlspecialchars($error) ?>
+            <div class="alert d-flex align-items-center mb-4">
+                <i class="bi bi-exclamation-circle me-2"></i>
+                <?= htmlspecialchars($error) ?>
             </div>
             <?php endif; ?>
             
-            <form method="POST">
-                <div class="mb-3">
-                    <label class="form-label">Correo electrónico</label>
+            <!-- Form -->
+            <form method="POST" autocomplete="off">
+                <div class="mb-4">
+                    <label for="email" class="form-label">Correo electrónico</label>
                     <div class="input-group">
                         <span class="input-group-text">
                             <i class="bi bi-envelope"></i>
                         </span>
                         <input type="email" 
                                class="form-control" 
+                               id="email" 
                                name="email" 
                                value="<?= htmlspecialchars($formData['email']) ?>"
                                placeholder="tu@empresa.com"
@@ -279,17 +424,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 
                 <div class="mb-4">
-                    <label class="form-label">Contraseña</label>
-                    <div class="input-group position-relative">
-                        <span class="input-group-text">
-                            <i class="bi bi-lock"></i>
-                        </span>
-                        <input type="password" 
-                               class="form-control" 
-                               id="password"
-                               name="password" 
-                               placeholder="Tu contraseña"
-                               required>
+                    <label for="password" class="form-label">Contraseña</label>
+                    <div class="password-wrapper">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-lock"></i>
+                            </span>
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="password" 
+                                   name="password" 
+                                   placeholder="Tu contraseña"
+                                   required>
+                        </div>
                         <span class="password-toggle" onclick="togglePassword()">
                             <i class="bi bi-eye" id="toggleIcon"></i>
                         </span>
@@ -297,19 +444,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 
                 <button type="submit" class="btn btn-login">
-                    <i class="bi bi-box-arrow-in-right me-2"></i>Ingresar
+                    Ingresar
                 </button>
             </form>
             
+            <!-- Link colaboradores -->
             <div class="collaborator-link">
                 <a href="<?= APP_BASE_URL ?>/ui/login.php">
                     <i class="bi bi-person-workspace me-1"></i>¿Eres colaborador? Accede aquí
                 </a>
             </div>
         </div>
+        
+        <!-- Footer -->
+        <div class="login-footer">
+            © 2025 <?= APP_NAME ?>
+        </div>
     </div>
     
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
+        // Toggle password visibility
         function togglePassword() {
             const passwordInput = document.getElementById('password');
             const toggleIcon = document.getElementById('toggleIcon');
@@ -324,7 +481,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 toggleIcon.classList.add('bi-eye');
             }
         }
+        
+        // Inicializar tsParticles
+        tsParticles.load("tsparticles", {
+            fullScreen: { enable: false },
+            background: { color: { value: "#000000" } },
+            fpsLimit: 120,
+            interactivity: {
+                events: {
+                    onHover: { enable: true, mode: "repulse" },
+                    resize: true
+                },
+                modes: {
+                    repulse: { distance: 100, duration: 0.4 }
+                }
+            },
+            particles: {
+                color: { value: "#ffffff" },
+                move: {
+                    direction: "none",
+                    enable: true,
+                    outModes: { default: "out" },
+                    random: true,
+                    speed: { min: 0.1, max: 0.5 },
+                    straight: false
+                },
+                number: {
+                    density: { enable: true, area: 800 },
+                    value: 100
+                },
+                opacity: {
+                    value: { min: 0.1, max: 1 },
+                    animation: {
+                        enable: true,
+                        speed: 1,
+                        sync: false,
+                        startValue: "random"
+                    }
+                },
+                shape: { type: "circle" },
+                size: {
+                    value: { min: 0.5, max: 2 },
+                    animation: { enable: true, speed: 2, sync: false }
+                },
+                twinkle: {
+                    particles: { enable: true, frequency: 0.05, opacity: 1 }
+                }
+            },
+            detectRetina: true
+        });
     </script>
 </body>
 </html>
-

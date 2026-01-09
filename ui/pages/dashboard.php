@@ -7,11 +7,13 @@ require_once __DIR__ . '/../modules/proyectos/models/ProyectoModel.php';
 require_once __DIR__ . '/../modules/tareas/models/TareaModel.php';
 require_once __DIR__ . '/../modules/reuniones/models/ReunionModel.php';
 require_once __DIR__ . '/../modules/empresas/models/EmpresaModel.php';
+require_once __DIR__ . '/../models/TiempoModel.php';
 
 $proyectoModel = new ProyectoModel();
 $tareaModel = new TareaModel();
 $reunionModel = new ReunionModel();
 $empresaModel = new EmpresaModel();
+$tiempoModel = new TiempoModel();
 
 $currentUser = getCurrentUser();
 
@@ -32,6 +34,10 @@ $reunionesProximas = $reunionModel->getProximas(7);
 
 // Proyectos recientes
 $proyectosRecientes = array_slice($proyectos, 0, 5);
+
+// Horas generales
+$horasGeneral = $tiempoModel->getHorasGeneral();
+$horasPorEmpresa = $tiempoModel->getResumenPorEmpresa();
 ?>
 
 <!-- Bienvenida -->
@@ -49,11 +55,11 @@ $proyectosRecientes = array_slice($proyectos, 0, 5);
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="stat-value text-primary"><?= count($proyectos) ?></div>
+                        <div class="stat-value" style="color: var(--accent-info);"><?= count($proyectos) ?></div>
                         <div class="stat-label">Proyectos</div>
                     </div>
-                    <div class="p-2 rounded-3" style="background: rgba(85, 165, 200, 0.15);">
-                        <i class="bi bi-briefcase text-primary" style="font-size: 24px;"></i>
+                    <div class="stat-icon" style="background: rgba(96, 165, 250, 0.15);">
+                        <i class="bi bi-briefcase" style="color: var(--accent-info);"></i>
                     </div>
                 </div>
             </div>
@@ -65,11 +71,11 @@ $proyectosRecientes = array_slice($proyectos, 0, 5);
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="stat-value" style="color: var(--secondary-green);"><?= $proyectosActivos ?></div>
+                        <div class="stat-value" style="color: var(--accent-success);"><?= $proyectosActivos ?></div>
                         <div class="stat-label">En Progreso</div>
                     </div>
-                    <div class="p-2 rounded-3" style="background: rgba(154, 208, 130, 0.15);">
-                        <i class="bi bi-play-circle" style="font-size: 24px; color: var(--secondary-green);"></i>
+                    <div class="stat-icon" style="background: rgba(74, 222, 128, 0.15);">
+                        <i class="bi bi-play-circle" style="color: var(--accent-success);"></i>
                     </div>
                 </div>
             </div>
@@ -84,8 +90,8 @@ $proyectosRecientes = array_slice($proyectos, 0, 5);
                         <div class="stat-value"><?= count($tareas) ?></div>
                         <div class="stat-label">Tareas</div>
                     </div>
-                    <div class="p-2 rounded-3" style="background: rgba(106, 13, 173, 0.15);">
-                        <i class="bi bi-list-task" style="font-size: 24px; color: var(--purple-accent);"></i>
+                    <div class="stat-icon" style="background: rgba(255, 255, 255, 0.1);">
+                        <i class="bi bi-list-task" style="color: var(--text-secondary);"></i>
                     </div>
                 </div>
             </div>
@@ -100,10 +106,87 @@ $proyectosRecientes = array_slice($proyectos, 0, 5);
                         <div class="stat-value"><?= count($empresas) ?></div>
                         <div class="stat-label">Empresas</div>
                     </div>
-                    <div class="p-2 rounded-3" style="background: rgba(177, 188, 191, 0.15);">
-                        <i class="bi bi-building" style="font-size: 24px; color: var(--tertiary-gray);"></i>
+                    <div class="stat-icon" style="background: rgba(255, 255, 255, 0.1);">
+                        <i class="bi bi-building" style="color: var(--text-secondary);"></i>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumen de Horas -->
+<div class="row g-4 mb-4">
+    <div class="col-12 fade-in-up" style="animation-delay: 0.45s">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Resumen de Horas</h6>
+                <div class="d-flex gap-3">
+                    <div class="text-center">
+                        <div class="h4 mb-0" style="color: var(--accent-info);"><?= TiempoModel::formatHoras($horasGeneral['horas_reales']) ?></div>
+                        <small class="text-muted">Registradas</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="h4 mb-0" style="color: var(--accent-warning);"><?= TiempoModel::formatHoras($horasGeneral['horas_estimadas']) ?></div>
+                        <small class="text-muted">Estimadas</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <?php if (empty($horasPorEmpresa)): ?>
+                <div class="text-center py-4">
+                    <i class="bi bi-clock text-muted" style="font-size: 36px;"></i>
+                    <p class="text-muted mt-2 mb-0">No hay horas registradas</p>
+                </div>
+                <?php else: ?>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Empresa</th>
+                                <th class="text-center">Proyectos</th>
+                                <th class="text-center">Horas Registradas</th>
+                                <th class="text-center">Horas Estimadas</th>
+                                <th style="width: 200px;">Progreso</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach (array_slice($horasPorEmpresa, 0, 5) as $empresa): ?>
+                            <?php $porcentaje = TiempoModel::calcularPorcentaje($empresa['horas_reales'], $empresa['horas_estimadas']); ?>
+                            <tr class="cursor-pointer" onclick="window.location='<?= uiModuleUrl('empresas', 'ver', ['id' => $empresa['id']]) ?>'">
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <?php if (!empty($empresa['logo'])): ?>
+                                        <img src="<?= UPLOADS_URL . '/' . $empresa['logo'] ?>" alt="" style="width: 28px; height: 28px; object-fit: contain; border-radius: 4px; background: rgba(255,255,255,0.1); padding: 2px;">
+                                        <?php else: ?>
+                                        <div class="d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: rgba(255,255,255,0.1); border-radius: 4px;">
+                                            <i class="bi bi-building text-muted"></i>
+                                        </div>
+                                        <?php endif; ?>
+                                        <strong><?= htmlspecialchars($empresa['nombre']) ?></strong>
+                                    </div>
+                                </td>
+                                <td class="text-center"><?= $empresa['total_proyectos'] ?></td>
+                                <td class="text-center">
+                                    <span style="color: var(--accent-info);"><?= TiempoModel::formatHoras($empresa['horas_reales']) ?></span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-muted"><?= TiempoModel::formatHoras($empresa['horas_estimadas']) ?></span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="progress flex-grow-1" style="height: 6px;">
+                                            <div class="progress-bar <?= $porcentaje > 100 ? 'bg-danger' : '' ?>" style="width: <?= min($porcentaje, 100) ?>%"></div>
+                                        </div>
+                                        <small class="text-muted" style="min-width: 40px;"><?= $porcentaje ?>%</small>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

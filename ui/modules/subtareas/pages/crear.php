@@ -101,9 +101,13 @@ if (!empty($formData['tarea_id'])) {
                 <div class="alert alert-info d-flex align-items-center mb-4">
                     <i class="bi bi-info-circle me-2"></i>
                     <div>
-                        <strong>Tarea:</strong> <?= htmlspecialchars($tareaSeleccionada['nombre']) ?>
+                        <?php if (!empty($tareaSeleccionada['empresa_nombre'])): ?>
+                        <strong>Empresa:</strong> <?= htmlspecialchars($tareaSeleccionada['empresa_nombre']) ?>
                         <span class="mx-2">|</span>
+                        <?php endif; ?>
                         <strong>Proyecto:</strong> <?= htmlspecialchars($tareaSeleccionada['proyecto_nombre'] ?? 'Sin proyecto') ?>
+                        <span class="mx-2">|</span>
+                        <strong>Tarea:</strong> <?= htmlspecialchars($tareaSeleccionada['nombre']) ?>
                     </div>
                 </div>
                 <?php endif; ?>

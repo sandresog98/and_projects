@@ -7,11 +7,13 @@ require_once __DIR__ . '/../../../../ui/modules/proyectos/models/ProyectoModel.p
 require_once __DIR__ . '/../../../../ui/modules/tareas/models/TareaModel.php';
 require_once __DIR__ . '/../../../../ui/modules/subtareas/models/SubtareaModel.php';
 require_once __DIR__ . '/../../../../ui/modules/comentarios/models/ComentarioModel.php';
+require_once __DIR__ . '/../../../../ui/models/TiempoModel.php';
 
 $proyectoModel = new ProyectoModel();
 $tareaModel = new TareaModel();
 $subtareaModel = new SubtareaModel();
 $comentarioModel = new ComentarioModel();
+$tiempoModel = new TiempoModel();
 
 $id = (int)($_GET['id'] ?? 0);
 $empresaId = getCurrentClientEmpresaId();
@@ -61,6 +63,10 @@ if ($proyecto['estado'] == 3) {
 
 // Obtener comentarios
 $comentarios = $comentarioModel->getByEntidad('proyecto', $id);
+
+// Obtener horas del proyecto
+$horasProyecto = $tiempoModel->getHorasProyecto($id);
+$porcentajeHoras = TiempoModel::calcularPorcentaje($horasProyecto['horas_reales'], $horasProyecto['horas_estimadas']);
 
 // Procesar nuevo comentario
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comentario'])) {
@@ -165,6 +171,8 @@ if (!function_exists('getStatusClass')) {
                             $avanceTarea = $tarea['estado'] == 2 ? 50 : 0;
                         }
                         $subtareas = $subtareaModel->getByTarea($tarea['id']);
+                        // Obtener horas de la tarea
+                        $horasTareaItem = $tiempoModel->getHorasTarea($tarea['id']);
                     ?>
                     <div class="accordion-item" style="background: transparent; border-color: var(--border-color);">
                         <h2 class="accordion-header">
@@ -175,8 +183,14 @@ if (!function_exists('getStatusClass')) {
                                     <div class="status-dot <?= getStatusClass($tarea['estado']) ?>"></div>
                                     <div class="flex-grow-1">
                                         <strong><?= htmlspecialchars($tarea['nombre']) ?></strong>
-                                        <div class="d-flex align-items-center gap-3 mt-1">
+                                        <div class="d-flex align-items-center gap-3 mt-1 flex-wrap">
                                             <small class="text-muted"><?= $tarea['total_subtareas'] ?> subtareas</small>
+                                            <small class="text-muted">
+                                                <i class="bi bi-clock me-1"></i><?= TiempoModel::formatHoras($horasTareaItem['horas_reales']) ?>
+                                                <?php if ($horasTareaItem['horas_estimadas'] > 0): ?>
+                                                / <?= TiempoModel::formatHoras($horasTareaItem['horas_estimadas']) ?>
+                                                <?php endif; ?>
+                                            </small>
                                             <div class="d-flex align-items-center gap-2" style="width: 80px;">
                                                 <div class="progress flex-grow-1" style="height: 4px;">
                                                     <div class="progress-bar" style="width: <?= $avanceTarea ?>%"></div>
@@ -301,7 +315,7 @@ if (!function_exists('getStatusClass')) {
         </div>
         
         <!-- Progreso visual -->
-        <div class="card fade-in-up">
+        <div class="card mb-4 fade-in-up">
             <div class="card-header">
                 <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Progreso</h6>
             </div>
@@ -319,6 +333,41 @@ if (!function_exists('getStatusClass')) {
                     </div>
                 </div>
                 <p class="text-muted small mb-0">Progreso general del proyecto</p>
+            </div>
+        </div>
+        
+        <!-- Resumen de Horas -->
+        <div class="card fade-in-up">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Horas</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <div class="h4 mb-0" style="color: var(--accent-info);"><?= TiempoModel::formatHoras($horasProyecto['horas_reales']) ?></div>
+                        <small class="text-muted">Registradas</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="h4 mb-0" style="color: var(--accent-warning);"><?= TiempoModel::formatHoras($horasProyecto['horas_estimadas']) ?></div>
+                        <small class="text-muted">Estimadas</small>
+                    </div>
+                </div>
+                
+                <?php if ($horasProyecto['horas_estimadas'] > 0): ?>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-grow-1" style="height: 8px;">
+                        <div class="progress-bar <?= $porcentajeHoras > 100 ? 'bg-danger' : '' ?>" style="width: <?= min($porcentajeHoras, 100) ?>%"></div>
+                    </div>
+                    <small class="text-muted"><?= $porcentajeHoras ?>%</small>
+                </div>
+                <p class="text-muted small mt-2 mb-0 text-center">
+                    <?php if ($porcentajeHoras > 100): ?>
+                    <i class="bi bi-exclamation-triangle text-danger me-1"></i>Se han excedido las horas estimadas
+                    <?php else: ?>
+                    Horas consumidas vs estimadas
+                    <?php endif; ?>
+                </p>
+                <?php endif; ?>
             </div>
         </div>
     </div>

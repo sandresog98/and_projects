@@ -6,10 +6,12 @@
 require_once __DIR__ . '/../models/TareaModel.php';
 require_once __DIR__ . '/../../subtareas/models/SubtareaModel.php';
 require_once __DIR__ . '/../../comentarios/models/ComentarioModel.php';
+require_once __DIR__ . '/../../../models/TiempoModel.php';
 
 $model = new TareaModel();
 $subtareaModel = new SubtareaModel();
 $comentarioModel = new ComentarioModel();
+$tiempoModel = new TiempoModel();
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
@@ -40,6 +42,10 @@ $comentarios = $comentarioModel->getByEntidad('tarea', $id);
 $totalSubtareas = count($subtareas);
 $subtareasCompletadas = count(array_filter($subtareas, fn($s) => $s['estado'] == 3));
 $avance = $totalSubtareas > 0 ? round(($subtareasCompletadas / $totalSubtareas) * 100) : (float)($tarea['avance'] ?? 0);
+
+// Obtener horas de la tarea
+$horasTarea = $tiempoModel->getHorasTarea($id);
+$porcentajeHoras = TiempoModel::calcularPorcentaje($horasTarea['horas_reales'], $horasTarea['horas_estimadas']);
 
 // Procesar nuevo comentario
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comentario'])) {
@@ -123,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comentario'])) {
     <div class="col-6 col-lg-3 fade-in-up" style="animation-delay: 0.3s">
         <div class="card h-100">
             <div class="card-body text-center">
-                <div class="stat-value" style="color: var(--secondary-green);"><?= $subtareasCompletadas ?></div>
+                <div class="stat-value" style="color: var(--accent-success);"><?= $subtareasCompletadas ?></div>
                 <div class="stat-label">Completadas</div>
             </div>
         </div>
@@ -141,6 +147,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comentario'])) {
                 <i class="bi bi-person text-muted" style="font-size: 24px;"></i>
                 <div class="stat-label">Sin asignar</div>
                 <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumen de Horas -->
+<div class="row g-4 mb-4">
+    <div class="col-12 fade-in-up" style="animation-delay: 0.45s">
+        <div class="card">
+            <div class="card-body py-3">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-clock-history fs-4" style="color: var(--accent-info);"></i>
+                            <span class="fw-medium" style="color: var(--text-primary);">Horas de la Tarea</span>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="progress flex-grow-1" style="height: 10px; max-width: 300px;">
+                                <div class="progress-bar <?= $porcentajeHoras > 100 ? 'bg-danger' : '' ?>" style="width: <?= min($porcentajeHoras, 100) ?>%"></div>
+                            </div>
+                            <span class="text-muted"><?= $porcentajeHoras ?>%</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <div class="d-flex gap-4">
+                            <div class="text-center">
+                                <div class="h5 mb-0" style="color: var(--accent-info);"><?= TiempoModel::formatHoras($horasTarea['horas_reales']) ?></div>
+                                <small class="text-muted">Registradas</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="h5 mb-0" style="color: var(--accent-warning);"><?= TiempoModel::formatHoras($horasTarea['horas_estimadas']) ?></div>
+                                <small class="text-muted">Estimadas</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -218,14 +262,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comentario'])) {
                                 <?= getStatusText($subtarea['estado']) ?>
                             </span>
                             <!-- Botones de acción -->
-                            <div class="btn-group btn-group-sm ms-2">
+                            <div class="d-flex gap-1 ms-2">
                                 <a href="<?= uiModuleUrl('subtareas', 'ver', ['id' => $subtarea['id']]) ?>" 
-                                   class="btn btn-outline-secondary" title="Ver detalles">
+                                   class="btn-icon btn-icon-sm" title="Ver detalles" data-bs-toggle="tooltip">
                                     <i class="bi bi-eye"></i>
                                 </a>
                                 <?php if (hasPermission('subtareas', 'editar')): ?>
                                 <a href="<?= uiModuleUrl('subtareas', 'editar', ['id' => $subtarea['id']]) ?>" 
-                                   class="btn btn-outline-primary" title="Editar">
+                                   class="btn-icon btn-icon-sm btn-icon-primary" title="Editar" data-bs-toggle="tooltip">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <?php endif; ?>

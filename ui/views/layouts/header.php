@@ -43,7 +43,21 @@ $currentModule = $currentModule ?? '';
     <!-- App CSS -->
     <link href="<?= assetUrl('css/app.css') ?>" rel="stylesheet">
     
+    <!-- tsParticles -->
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
+    
     <style>
+        /* Partículas de fondo */
+        #tsparticles-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
         /* Sidebar */
         .sidebar {
             position: fixed;
@@ -51,21 +65,72 @@ $currentModule = $currentModule ?? '';
             left: 0;
             width: 260px;
             height: 100vh;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
             z-index: 1000;
             transition: transform 0.3s ease;
             overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        /* Glow en sidebar links activos */
+        .sidebar-link.active {
+            position: relative;
+            overflow: visible;
+        }
+        
+        .sidebar-link.active::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            background: conic-gradient(
+                from var(--glow-angle, 0deg),
+                rgba(255,255,255,0.6),
+                rgba(107,114,128,0.4),
+                rgba(30,58,95,0.5),
+                rgba(127,29,29,0.4),
+                rgba(255,255,255,0.6)
+            );
+            -webkit-mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.8;
+            animation: glow-rotate 4s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes glow-rotate {
+            0% { --glow-angle: 0deg; }
+            100% { --glow-angle: 360deg; }
+        }
+        
+        @property --glow-angle {
+            syntax: '<angle>';
+            initial-value: 0deg;
+            inherits: false;
         }
         
         .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border-color);
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
         
         .sidebar-logo {
             max-width: 160px;
             height: auto;
+            filter: brightness(0) invert(1);
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar-logo:hover {
+            transform: scale(1.02);
         }
         
         .sidebar-nav {
@@ -77,12 +142,12 @@ $currentModule = $currentModule ?? '';
         }
         
         .sidebar-section-title {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-muted);
-            padding: 12px 14px 8px;
+            letter-spacing: 2px;
+            color: #888;
+            padding: 15px 14px 10px;
         }
         
         .sidebar-link {
@@ -90,22 +155,40 @@ $currentModule = $currentModule ?? '';
             align-items: center;
             gap: 12px;
             padding: 12px 14px;
-            color: var(--text-secondary);
+            color: #9CA3AF;
             text-decoration: none;
-            border-radius: var(--radius-md);
+            border-radius: 10px;
             transition: all 0.2s ease;
             margin-bottom: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sidebar-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: #fff;
+            transform: scaleY(0);
+            transition: transform 0.2s ease;
         }
         
         .sidebar-link:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+            color: #D1D5DB;
         }
         
         .sidebar-link.active {
-            background: linear-gradient(135deg, rgba(85, 165, 200, 0.2), rgba(106, 13, 173, 0.2));
-            color: var(--primary-blue);
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
             font-weight: 500;
+        }
+        
+        .sidebar-link.active::before {
+            transform: scaleY(1);
         }
         
         .sidebar-link i {
@@ -120,8 +203,15 @@ $currentModule = $currentModule ?? '';
             left: 0;
             right: 0;
             padding: 15px;
-            border-top: 1px solid var(--border-color);
-            background: var(--bg-secondary);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(10, 10, 10, 0.95);
+        }
+        
+        .sidebar-user .user-avatar {
+            width: 38px;
+            height: 38px;
+            font-size: 13px;
+            background: linear-gradient(135deg, #333, #555);
         }
         
         /* Main content */
@@ -129,6 +219,8 @@ $currentModule = $currentModule ?? '';
             margin-left: 260px;
             min-height: 100vh;
             padding: 30px;
+            position: relative;
+            z-index: 1;
         }
         
         /* Mobile toggle */
@@ -138,11 +230,16 @@ $currentModule = $currentModule ?? '';
             top: 15px;
             left: 15px;
             z-index: 1001;
-            padding: 10px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
+            padding: 10px 12px;
+            background: rgba(20, 20, 20, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #fff;
+        }
+        
+        .sidebar-toggle:hover {
+            background: rgba(40, 40, 40, 0.9);
         }
         
         @media (max-width: 992px) {
@@ -169,7 +266,8 @@ $currentModule = $currentModule ?? '';
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
+                background: rgba(0, 0, 0, 0.7);
+                backdrop-filter: blur(5px);
                 z-index: 999;
             }
             
@@ -182,9 +280,28 @@ $currentModule = $currentModule ?? '';
         .cursor-pointer {
             cursor: pointer;
         }
+        
+        /* Page header styles */
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-header h4 {
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+        
+        .page-header p {
+            color: #666;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
+    <!-- Partículas de fondo -->
+    <div id="tsparticles-bg"></div>
+    
     <!-- Sidebar Toggle (Mobile) -->
     <button class="sidebar-toggle" id="sidebarToggle">
         <i class="bi bi-list"></i>
@@ -280,8 +397,8 @@ $currentModule = $currentModule ?? '';
                         <?php endif; ?>
                     </div>
                     <div class="flex-grow-1 overflow-hidden">
-                        <strong class="d-block text-truncate text-white"><?= htmlspecialchars($currentUser['nombre']) ?></strong>
-                        <small class="text-muted text-capitalize"><?= htmlspecialchars($currentUser['rol']) ?></small>
+                        <strong class="d-block text-truncate text-white" style="font-size: 14px;"><?= htmlspecialchars($currentUser['nombre']) ?></strong>
+                        <small class="text-muted text-capitalize" style="font-size: 11px;"><?= htmlspecialchars($currentUser['rol']) ?></small>
                     </div>
                     <i class="bi bi-chevron-up text-muted"></i>
                 </a>
@@ -289,6 +406,11 @@ $currentModule = $currentModule ?? '';
                     <li>
                         <a class="dropdown-item" href="<?= uiModuleUrl('perfil') ?>">
                             <i class="bi bi-person me-2"></i>Mi Perfil
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="<?= uiModuleUrl('perfil') ?>#cambiar-password">
+                            <i class="bi bi-key me-2"></i>Cambiar Contraseña
                         </a>
                     </li>
                     <li><hr class="dropdown-divider"></li>

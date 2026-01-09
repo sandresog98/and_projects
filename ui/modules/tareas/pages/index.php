@@ -219,11 +219,13 @@ document.querySelectorAll('.auto-submit').forEach(select => {
                         </td>
                         <td>
                             <div class="d-flex gap-1">
-                                <a href="<?= uiModuleUrl('tareas', 'ver', ['id' => $tarea['id']]) ?>" class="btn btn-sm btn-info" title="Ver detalles">
+                                <a href="<?= uiModuleUrl('tareas', 'ver', ['id' => $tarea['id']]) ?>" 
+                                   class="btn-icon btn-icon-sm" title="Ver detalles" data-bs-toggle="tooltip">
                                     <i class="bi bi-eye"></i>
                                 </a>
                                 <?php if (hasPermission('tareas', 'editar')): ?>
-                                <a href="<?= uiModuleUrl('tareas', 'editar', ['id' => $tarea['id']]) ?>" class="btn btn-sm btn-primary" title="Editar">
+                                <a href="<?= uiModuleUrl('tareas', 'editar', ['id' => $tarea['id']]) ?>" 
+                                   class="btn-icon btn-icon-sm btn-icon-primary" title="Editar" data-bs-toggle="tooltip">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <?php endif; ?>

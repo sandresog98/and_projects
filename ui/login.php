@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es" data-bs-theme="dark">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,188 +50,171 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Bootstrap 5.3 Dark Theme -->
+    <!-- Bootstrap 5.3 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     
+    <!-- tsParticles -->
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
+    
     <style>
-        :root {
-            --primary-blue: #55A5C8;
-            --secondary-green: #9AD082;
-            --tertiary-gray: #B1BCBF;
-            --dark-blue: #35719E;
-            --bg-dark: #0d1117;
-            --bg-card: #161b22;
-            --bg-input: #21262d;
-            --border-color: #30363d;
-            --text-primary: #f0f6fc;
-            --text-secondary: #8b949e;
-        }
-        
         * {
             font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
         body {
             min-height: 100vh;
-            background: var(--bg-dark);
+            background: #000;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: white;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Partículas */
+        #tsparticles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        /* Gradiente overlay */
+        .gradient-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.7) 70%, #000 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        /* Container principal */
+        .login-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 460px;
             padding: 20px;
         }
         
-        .login-container {
-            width: 100%;
-            max-width: 1000px;
-            display: flex;
-            background: var(--bg-card);
+        /* Card de login */
+        .login-card {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-        
-        .login-sidebar {
-            width: 45%;
-            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 100%);
             padding: 50px 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
+            animation: cardEnter 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
         }
         
-        .login-sidebar::before {
-            content: '';
-            position: absolute;
-            width: 300px;
-            height: 300px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            top: -100px;
-            right: -100px;
+        @keyframes cardEnter {
+            0% {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
         
-        .login-sidebar::after {
-            content: '';
-            position: absolute;
-            width: 200px;
-            height: 200px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 50%;
-            bottom: -50px;
-            left: -50px;
-        }
-        
-        .sidebar-content {
-            position: relative;
-            z-index: 1;
+        /* Logo */
+        .login-logo {
             text-align: center;
-            color: white;
+            margin-bottom: 40px;
         }
         
-        .sidebar-content h1 {
-            font-weight: 800;
-            font-size: 32px;
-            margin-bottom: 15px;
+        .login-logo img {
+            width: 200px;
+            height: auto;
+            filter: brightness(0) invert(1);
+            animation: logoFloat 3s ease-in-out infinite;
         }
         
-        .sidebar-content p {
-            font-size: 15px;
-            opacity: 0.9;
-            line-height: 1.7;
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
         }
         
-        .features-list {
-            margin-top: 40px;
-            text-align: left;
+        /* Título */
+        .login-title {
+            text-align: center;
+            margin-bottom: 10px;
         }
         
-        .feature-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .feature-icon {
-            width: 44px;
-            height: 44px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            flex-shrink: 0;
-        }
-        
-        .feature-text {
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        .login-form-section {
-            flex: 1;
-            padding: 50px 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        
-        .login-header {
-            margin-bottom: 35px;
-        }
-        
-        .login-header h2 {
-            font-weight: 800;
+        .login-title h2 {
             font-size: 28px;
-            color: var(--text-primary);
+            font-weight: 700;
+            color: #fff;
             margin-bottom: 8px;
         }
         
-        .login-header p {
-            color: var(--text-secondary);
-            font-size: 15px;
+        .login-title p {
+            color: #666;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
         
+        /* Separador */
+        .login-divider {
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+            margin: 25px auto 35px;
+        }
+        
+        /* Form */
         .form-label {
             font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-            font-size: 14px;
+            color: #999;
+            margin-bottom: 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .form-control {
-            background: var(--bg-input);
-            border: 2px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            padding: 14px 16px;
+            padding: 16px 20px;
             font-size: 15px;
-            color: var(--text-primary);
+            color: #fff;
             transition: all 0.3s ease;
         }
         
         .form-control:focus {
-            background: var(--bg-input);
-            border-color: var(--primary-blue);
-            box-shadow: 0 0 0 4px rgba(85, 165, 200, 0.15);
-            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
+            color: #fff;
         }
         
         .form-control::placeholder {
-            color: var(--text-secondary);
+            color: #444;
         }
         
         .input-group-text {
-            background: var(--bg-input);
-            border: 2px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
             border-right: none;
             border-radius: 12px 0 0 12px;
-            color: var(--text-secondary);
+            color: #666;
+            padding: 0 16px;
         }
         
         .input-group .form-control {
@@ -240,130 +223,171 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         .input-group:focus-within .input-group-text {
-            border-color: var(--primary-blue);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #999;
         }
         
+        /* Botón login */
         .btn-login {
-            background: linear-gradient(135deg, var(--dark-blue), var(--primary-blue));
+            background: #fff;
             border: none;
             border-radius: 12px;
-            padding: 14px;
+            padding: 16px;
             font-weight: 600;
-            font-size: 16px;
-            color: white;
+            font-size: 14px;
+            color: #000;
             width: 100%;
-            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1), transparent);
+            transition: left 0.5s;
         }
         
         .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(85, 165, 200, 0.35);
-            color: white;
+            background: #e5e5e5;
+            color: #000;
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-login:hover::before {
+            left: 100%;
+        }
+        
+        /* Password toggle */
+        .password-wrapper {
+            position: relative;
         }
         
         .password-toggle {
             position: absolute;
-            right: 15px;
+            right: 16px;
             top: 50%;
             transform: translateY(-50%);
             cursor: pointer;
-            color: var(--text-secondary);
+            color: #444;
             z-index: 10;
+            transition: color 0.3s;
         }
         
         .password-toggle:hover {
-            color: var(--primary-blue);
+            color: #fff;
         }
         
+        /* Alert */
         .alert {
             border: none;
             border-radius: 12px;
             padding: 14px 18px;
             font-size: 14px;
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(248, 113, 113, 0.3);
         }
         
-        .alert-danger {
-            background: rgba(255, 107, 107, 0.15);
-            color: #ff6b6b;
+        /* Footer */
+        .login-footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #333;
+            font-size: 12px;
+            letter-spacing: 1px;
         }
         
-        @media (max-width: 768px) {
-            .login-container {
-                flex-direction: column;
+        /* Features list */
+        .features-mini {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .feature-mini {
+            text-align: center;
+        }
+        
+        .feature-mini i {
+            font-size: 20px;
+            color: #666;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .feature-mini span {
+            font-size: 10px;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 40px 25px;
             }
             
-            .login-sidebar {
-                width: 100%;
-                padding: 30px 25px;
+            .login-logo img {
+                width: 160px;
             }
             
-            .login-form-section {
-                padding: 30px 25px;
+            .login-title h2 {
+                font-size: 24px;
             }
             
-            .sidebar-content h1 {
-                font-size: 26px;
-            }
-            
-            .features-list {
-                display: none;
+            .features-mini {
+                gap: 20px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Partículas -->
+    <div id="tsparticles"></div>
+    
+    <!-- Gradiente overlay -->
+    <div class="gradient-overlay"></div>
+    
+    <!-- Login Container -->
     <div class="login-container">
-        <!-- Sidebar -->
-        <div class="login-sidebar">
-            <div class="sidebar-content">
-                <h1><i class="bi bi-kanban me-2"></i><?= APP_NAME ?></h1>
-                <p>Gestiona tus proyectos de forma inteligente. Control total sobre tareas, tiempos y equipos de trabajo.</p>
-                
-                <div class="features-list">
-                    <div class="feature-item">
-                        <div class="feature-icon">
-                            <i class="bi bi-diagram-3"></i>
-                        </div>
-                        <span class="feature-text">Gestión de proyectos y tareas</span>
-                    </div>
-                    <div class="feature-item">
-                        <div class="feature-icon">
-                            <i class="bi bi-clock-history"></i>
-                        </div>
-                        <span class="feature-text">Tracking de tiempo trabajado</span>
-                    </div>
-                    <div class="feature-item">
-                        <div class="feature-icon">
-                            <i class="bi bi-graph-up-arrow"></i>
-                        </div>
-                        <span class="feature-text">Seguimiento de avance en tiempo real</span>
-                    </div>
-                    <div class="feature-item">
-                        <div class="feature-icon">
-                            <i class="bi bi-calendar-check"></i>
-                        </div>
-                        <span class="feature-text">Calendario de reuniones integrado</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Form Section -->
-        <div class="login-form-section">
-            <div class="login-header">
-                <h2>Bienvenido</h2>
-                <p>Ingresa tus credenciales para continuar</p>
+        <div class="login-card">
+            <!-- Logo -->
+            <div class="login-logo">
+                <img src="<?= assetUrl('img/logo-horizontal-white.png') ?>" alt="<?= APP_NAME ?>">
             </div>
             
+            <!-- Título -->
+            <div class="login-title">
+                <h2>Bienvenido</h2>
+                <p>Panel de Colaboradores</p>
+            </div>
+            
+            <div class="login-divider"></div>
+            
+            <!-- Error -->
             <?php if ($error): ?>
-            <div class="alert alert-danger d-flex align-items-center mb-4">
+            <div class="alert d-flex align-items-center mb-4">
                 <i class="bi bi-exclamation-circle me-2"></i>
                 <?= htmlspecialchars($error) ?>
             </div>
             <?php endif; ?>
             
+            <!-- Form -->
             <form method="POST" autocomplete="off">
-                <div class="mb-3">
+                <div class="mb-4">
                     <label for="email" class="form-label">Correo electrónico</label>
                     <div class="input-group">
                         <span class="input-group-text">
@@ -382,16 +406,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 <div class="mb-4">
                     <label for="password" class="form-label">Contraseña</label>
-                    <div class="input-group position-relative">
-                        <span class="input-group-text">
-                            <i class="bi bi-lock"></i>
-                        </span>
-                        <input type="password" 
-                               class="form-control" 
-                               id="password" 
-                               name="password" 
-                               placeholder="Tu contraseña"
-                               required>
+                    <div class="password-wrapper">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-lock"></i>
+                            </span>
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="password" 
+                                   name="password" 
+                                   placeholder="Tu contraseña"
+                                   required>
+                        </div>
                         <span class="password-toggle" onclick="togglePassword()">
                             <i class="bi bi-eye" id="toggleIcon"></i>
                         </span>
@@ -399,16 +425,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 
                 <button type="submit" class="btn btn-login">
-                    <i class="bi bi-box-arrow-in-right me-2"></i>
                     Iniciar Sesión
                 </button>
             </form>
             
-            <div class="text-center mt-4">
-                <small class="text-secondary">
-                    Panel de Colaboradores • <?= APP_NAME ?> v1.0
-                </small>
+            <!-- Mini features -->
+            <div class="features-mini">
+                <div class="feature-mini">
+                    <i class="bi bi-kanban"></i>
+                    <span>Proyectos</span>
+                </div>
+                <div class="feature-mini">
+                    <i class="bi bi-list-task"></i>
+                    <span>Tareas</span>
+                </div>
+                <div class="feature-mini">
+                    <i class="bi bi-calendar"></i>
+                    <span>Reuniones</span>
+                </div>
             </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="login-footer">
+            © 2025 <?= APP_NAME ?>
         </div>
     </div>
     
@@ -416,6 +456,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
+        // Toggle password visibility
         function togglePassword() {
             const passwordInput = document.getElementById('password');
             const toggleIcon = document.getElementById('toggleIcon');
@@ -430,7 +471,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 toggleIcon.classList.add('bi-eye');
             }
         }
+        
+        // Inicializar tsParticles
+        tsParticles.load("tsparticles", {
+            fullScreen: { enable: false },
+            background: { color: { value: "#000000" } },
+            fpsLimit: 120,
+            interactivity: {
+                events: {
+                    onHover: { enable: true, mode: "repulse" },
+                    resize: true
+                },
+                modes: {
+                    repulse: { distance: 100, duration: 0.4 }
+                }
+            },
+            particles: {
+                color: { value: "#ffffff" },
+                move: {
+                    direction: "none",
+                    enable: true,
+                    outModes: { default: "out" },
+                    random: true,
+                    speed: { min: 0.1, max: 0.5 },
+                    straight: false
+                },
+                number: {
+                    density: { enable: true, area: 800 },
+                    value: 100
+                },
+                opacity: {
+                    value: { min: 0.1, max: 1 },
+                    animation: {
+                        enable: true,
+                        speed: 1,
+                        sync: false,
+                        startValue: "random"
+                    }
+                },
+                shape: { type: "circle" },
+                size: {
+                    value: { min: 0.5, max: 2 },
+                    animation: { enable: true, speed: 2, sync: false }
+                },
+                twinkle: {
+                    particles: { enable: true, frequency: 0.05, opacity: 1 }
+                }
+            },
+            detectRetina: true
+        });
     </script>
 </body>
 </html>
-

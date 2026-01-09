@@ -6,6 +6,10 @@
             "dashboard": {
                 "ver": true
             },
+            "perfil": {
+                "ver": true,
+                "editar": true
+            },
             "empresas": {
                 "ver": true,
                 "crear": true,
@@ -64,6 +68,10 @@
         "modulos": {
             "dashboard": {
                 "ver": true
+            },
+            "perfil": {
+                "ver": true,
+                "editar": true
             },
             "empresas": {
                 "ver": true,

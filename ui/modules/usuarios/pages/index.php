@@ -164,32 +164,23 @@ $empresas = $empresaModel->getActiveForSelect();
                             <?php endif; ?>
                         </td>
                         <td>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
-                                    <i class="bi bi-three-dots-vertical"></i>
+                            <div class="d-flex gap-1 justify-content-end">
+                                <a href="<?= uiModuleUrl('usuarios', 'ver', ['id' => $usuario['id']]) ?>" 
+                                   class="btn-icon" title="Ver detalles" data-bs-toggle="tooltip">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <?php if (hasPermission('usuarios', 'editar')): ?>
+                                <a href="<?= uiModuleUrl('usuarios', 'editar', ['id' => $usuario['id']]) ?>" 
+                                   class="btn-icon btn-icon-primary" title="Editar" data-bs-toggle="tooltip">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <?php endif; ?>
+                                <?php if (hasPermission('usuarios', 'eliminar') && $usuario['id'] != getCurrentUserId()): ?>
+                                <button type="button" class="btn-icon btn-icon-danger" title="Desactivar" data-bs-toggle="tooltip"
+                                        onclick="confirmDelete('<?= uiModuleUrl('usuarios', 'eliminar', ['id' => $usuario['id']]) ?>', 'el usuario <?= htmlspecialchars($usuario['nombre']) ?>')">
+                                    <i class="bi bi-trash"></i>
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <a class="dropdown-item" href="<?= uiModuleUrl('usuarios', 'ver', ['id' => $usuario['id']]) ?>">
-                                            <i class="bi bi-eye me-2"></i>Ver detalles
-                                        </a>
-                                    </li>
-                                    <?php if (hasPermission('usuarios', 'editar')): ?>
-                                    <li>
-                                        <a class="dropdown-item" href="<?= uiModuleUrl('usuarios', 'editar', ['id' => $usuario['id']]) ?>">
-                                            <i class="bi bi-pencil me-2"></i>Editar
-                                        </a>
-                                    </li>
-                                    <?php endif; ?>
-                                    <?php if (hasPermission('usuarios', 'eliminar') && $usuario['id'] != getCurrentUserId()): ?>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item text-danger" href="#" onclick="confirmDelete('<?= uiModuleUrl('usuarios', 'eliminar', ['id' => $usuario['id']]) ?>', 'el usuario <?= htmlspecialchars($usuario['nombre']) ?>')">
-                                            <i class="bi bi-trash me-2"></i>Desactivar
-                                        </a>
-                                    </li>
-                                    <?php endif; ?>
-                                </ul>
+                                <?php endif; ?>
                             </div>
                         </td>
                     </tr>

@@ -10,6 +10,42 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script>
+        // Inicializar partículas de fondo
+        tsParticles.load("tsparticles-bg", {
+            fullScreen: { enable: false },
+            background: { color: { value: "transparent" } },
+            fpsLimit: 60,
+            particles: {
+                color: { value: "#ffffff" },
+                move: {
+                    direction: "none",
+                    enable: true,
+                    outModes: { default: "out" },
+                    random: true,
+                    speed: { min: 0.05, max: 0.2 },
+                    straight: false
+                },
+                number: {
+                    density: { enable: true, area: 1200 },
+                    value: 60
+                },
+                opacity: {
+                    value: { min: 0.05, max: 0.3 },
+                    animation: {
+                        enable: true,
+                        speed: 0.5,
+                        sync: false,
+                        startValue: "random"
+                    }
+                },
+                shape: { type: "circle" },
+                size: {
+                    value: { min: 0.5, max: 1.5 }
+                }
+            },
+            detectRetina: true
+        });
+        
         // Sidebar toggle (mobile)
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebarToggle');
@@ -36,12 +72,17 @@
                 text: `¿Deseas eliminar ${itemName}? Esta acción no se puede deshacer.`,
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
+                confirmButtonColor: '#fff',
+                cancelButtonColor: '#333',
                 confirmButtonText: 'Sí, eliminar',
                 cancelButtonText: 'Cancelar',
-                background: '#161B22',
-                color: '#F0F6FC'
+                background: '#0a0a0a',
+                color: '#fff',
+                customClass: {
+                    popup: 'glass',
+                    confirmButton: 'btn-sm',
+                    cancelButton: 'btn-sm'
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
                     window.location.href = url;
@@ -57,8 +98,8 @@
                 showConfirmButton: false,
                 timer: 3000,
                 timerProgressBar: true,
-                background: '#161B22',
-                color: '#F0F6FC',
+                background: '#0a0a0a',
+                color: '#fff',
                 didOpen: (toast) => {
                     toast.addEventListener('mouseenter', Swal.stopTimer);
                     toast.addEventListener('mouseleave', Swal.resumeTimer);

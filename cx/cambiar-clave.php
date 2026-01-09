@@ -45,7 +45,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark">
     <title>Cambiar Contraseña - <?= APP_NAME ?></title>
     
     <link rel="icon" type="image/x-icon" href="<?= assetUrl('favicons/favicon.ico') ?>">
@@ -55,149 +54,281 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     
+    <!-- tsParticles -->
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
+    
     <style>
-        :root {
-            --primary-color: #6A0DAD;
-            --secondary-color: #8A2BE2;
-            --accent-color: #DA70D6;
-            --text-light: #E0E0E0;
-            --text-dark: #FFFFFF;
-            --bg-dark: #1A1A2E;
-            --bg-card-dark: #16213E;
-            --border-dark: #0F3460;
-            --input-bg-dark: #0F3460;
+        * {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
-        * { font-family: 'Poppins', sans-serif; }
         
         body {
             min-height: 100vh;
-            background: linear-gradient(135deg, var(--bg-dark) 0%, #0F0F1A 100%);
+            background: #000;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-light);
+            color: white;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Partículas */
+        #tsparticles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        /* Gradiente overlay */
+        .gradient-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.7) 70%, #000 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        /* Container principal */
+        .change-password-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 460px;
             padding: 20px;
         }
         
-        .change-password-container {
-            width: 100%;
-            max-width: 450px;
-        }
-        
+        /* Card */
         .card {
-            background: var(--bg-card-dark);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 50px 40px;
+            animation: cardEnter 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
         }
         
-        .logo { text-align: center; margin-bottom: 30px; }
-        .logo img { max-width: 180px; }
+        @keyframes cardEnter {
+            0% {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
         
+        /* Logo */
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo img {
+            width: 180px;
+            height: auto;
+            filter: brightness(0) invert(1);
+        }
+        
+        /* Icon lock */
         .icon-lock {
-            width: 80px; height: 80px;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 20px;
+            margin: 0 auto 25px;
         }
         
-        .icon-lock i { font-size: 36px; color: white; }
-        
-        .form-label { font-weight: 600; color: var(--text-light); font-size: 14px; }
-        
-        .form-control {
-            background: var(--input-bg-dark);
-            border: 2px solid var(--border-dark);
-            border-radius: 12px;
-            padding: 14px 16px;
-            color: var(--text-light);
+        .icon-lock i {
+            font-size: 30px;
+            color: #fff;
         }
         
-        .form-control:focus {
-            background: var(--input-bg-dark);
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 4px rgba(218, 112, 214, 0.15);
-            color: var(--text-light);
-        }
-        
-        .input-group-text {
-            background: var(--input-bg-dark);
-            border: 2px solid var(--border-dark);
-            border-right: none;
-            border-radius: 12px 0 0 12px;
-            color: var(--text-light);
-        }
-        
-        .input-group .form-control {
-            border-radius: 0 12px 12px 0;
-            border-left: none;
-        }
-        
-        .btn-submit {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            border: none;
-            border-radius: 12px;
-            padding: 14px;
-            font-weight: 600;
-            font-size: 16px;
-            color: white;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(106, 13, 173, 0.4);
-            color: white;
-        }
-        
-        .alert { border-radius: 12px; border: none; font-size: 14px; }
-        .alert-danger { background: rgba(220, 53, 69, 0.2); color: #ff7b7b; }
-        .alert-info { background: rgba(85, 165, 200, 0.2); color: #55A5C8; }
-        
-        .password-toggle {
-            position: absolute; right: 15px; top: 50%;
-            transform: translateY(-50%); cursor: pointer;
-            color: var(--text-light); z-index: 10;
-        }
-        
-        /* Fix textos oscuros */
+        /* Textos */
         h4 {
-            color: var(--text-dark);
+            color: #fff;
+            font-size: 24px;
+            font-weight: 700;
         }
         
         .text-muted {
-            color: var(--text-light) !important;
-            opacity: 0.8;
+            color: #666 !important;
         }
         
         p {
-            color: var(--text-light);
+            color: #888;
+        }
+        
+        /* Form */
+        .form-label {
+            font-weight: 600;
+            color: #999;
+            margin-bottom: 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .form-control {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px 20px;
+            font-size: 15px;
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+        
+        .form-control::placeholder {
+            color: #444;
+        }
+        
+        .input-group-text {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-right: none;
+            border-radius: 12px 0 0 12px;
+            color: #666;
+            padding: 0 16px;
+        }
+        
+        .input-group .form-control {
+            border-left: none;
+            border-radius: 0 12px 12px 0;
+        }
+        
+        .input-group:focus-within .input-group-text {
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #999;
+        }
+        
+        /* Botón submit */
+        .btn-submit {
+            background: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #000;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-submit::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-submit:hover {
+            background: #e5e5e5;
+            color: #000;
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-submit:hover::before {
+            left: 100%;
+        }
+        
+        /* Password toggle */
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #444;
+            z-index: 10;
+            transition: color 0.3s;
+        }
+        
+        .password-toggle:hover {
+            color: #fff;
+        }
+        
+        /* Alerts */
+        .alert {
+            border: none;
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 14px;
+        }
+        
+        .alert-danger {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+        
+        .alert-info {
+            background: rgba(96, 165, 250, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(96, 165, 250, 0.3);
+        }
+        
+        /* Link cerrar sesión */
+        a.text-muted {
+            color: #444 !important;
+            transition: color 0.3s;
         }
         
         a.text-muted:hover {
-            color: var(--accent-color) !important;
+            color: #fff !important;
         }
         
-        /* Placeholders */
-        .form-control::placeholder {
-            color: rgba(224, 224, 224, 0.5);
-        }
-        
-        .form-control::-webkit-input-placeholder {
-            color: rgba(224, 224, 224, 0.5);
-        }
-        
-        .form-control::-moz-placeholder {
-            color: rgba(224, 224, 224, 0.5);
+        /* Responsive */
+        @media (max-width: 480px) {
+            .card {
+                padding: 40px 25px;
+            }
+            
+            .logo img {
+                width: 150px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Partículas -->
+    <div id="tsparticles"></div>
+    
+    <!-- Gradiente overlay -->
+    <div class="gradient-overlay"></div>
+    
+    <!-- Container -->
     <div class="change-password-container">
         <div class="card">
             <div class="logo">
@@ -210,7 +341,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <div class="text-center mb-4">
                 <h4 class="mb-2">Cambiar Contraseña</h4>
-                <p class="text-muted mb-0">Es tu primer acceso. Por seguridad, debes establecer una nueva contraseña.</p>
+                <p class="mb-0">Es tu primer acceso. Por seguridad, debes establecer una nueva contraseña.</p>
             </div>
             
             <?php if ($error): ?>
@@ -226,7 +357,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <form method="POST">
                 <div class="mb-3">
-                    <label class="form-label">Contraseña Actual (Temporal)</label>
+                    <label class="form-label">Contraseña Actual</label>
                     <div class="input-group position-relative">
                         <span class="input-group-text"><i class="bi bi-key"></i></span>
                         <input type="password" class="form-control" id="clave_actual" name="clave_actual" placeholder="Contraseña proporcionada" required>
@@ -248,7 +379,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 
                 <div class="mb-4">
-                    <label class="form-label">Confirmar Nueva Contraseña</label>
+                    <label class="form-label">Confirmar Contraseña</label>
                     <div class="input-group position-relative">
                         <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
                         <input type="password" class="form-control" id="confirmar_clave" name="confirmar_clave" placeholder="Repite la nueva contraseña" required>
@@ -259,7 +390,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 
                 <button type="submit" class="btn btn-submit">
-                    <i class="bi bi-check-lg me-2"></i>Guardar Nueva Contraseña
+                    Guardar Contraseña
                 </button>
             </form>
             
@@ -284,7 +415,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 icon.classList.replace('bi-eye-slash', 'bi-eye');
             }
         }
+        
+        // Inicializar tsParticles
+        tsParticles.load("tsparticles", {
+            fullScreen: { enable: false },
+            background: { color: { value: "#000000" } },
+            fpsLimit: 120,
+            interactivity: {
+                events: {
+                    onHover: { enable: true, mode: "repulse" },
+                    resize: true
+                },
+                modes: {
+                    repulse: { distance: 100, duration: 0.4 }
+                }
+            },
+            particles: {
+                color: { value: "#ffffff" },
+                move: {
+                    direction: "none",
+                    enable: true,
+                    outModes: { default: "out" },
+                    random: true,
+                    speed: { min: 0.1, max: 0.5 },
+                    straight: false
+                },
+                number: {
+                    density: { enable: true, area: 800 },
+                    value: 100
+                },
+                opacity: {
+                    value: { min: 0.1, max: 1 },
+                    animation: {
+                        enable: true,
+                        speed: 1,
+                        sync: false,
+                        startValue: "random"
+                    }
+                },
+                shape: { type: "circle" },
+                size: {
+                    value: { min: 0.5, max: 2 },
+                    animation: { enable: true, speed: 2, sync: false }
+                },
+                twinkle: {
+                    particles: { enable: true, frequency: 0.05, opacity: 1 }
+                }
+            },
+            detectRetina: true
+        });
     </script>
 </body>
 </html>
-

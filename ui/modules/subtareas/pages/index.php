@@ -251,29 +251,22 @@ if ($tarea_id) {
                                     <?= getStatusText($subtarea['estado']) ?>
                                 </span>
                                 
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
-                                        <i class="bi bi-three-dots-vertical"></i>
+                                <!-- Botones de acción -->
+                                <div class="d-flex gap-1">
+                                    <a href="<?= uiModuleUrl('subtareas', 'ver', ['id' => $subtarea['id']]) ?>" 
+                                       class="btn-icon btn-icon-sm" title="Ver detalles" data-bs-toggle="tooltip">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <?php if (hasPermission('subtareas', 'editar')): ?>
+                                    <a href="<?= uiModuleUrl('subtareas', 'editar', ['id' => $subtarea['id']]) ?>" 
+                                       class="btn-icon btn-icon-sm btn-icon-primary" title="Editar" data-bs-toggle="tooltip">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn-icon btn-icon-sm btn-icon-success" 
+                                            data-bs-toggle="modal" data-bs-target="#modalTiempo<?= $subtarea['id'] ?>" title="Registrar tiempo">
+                                        <i class="bi bi-clock"></i>
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li>
-                                            <a class="dropdown-item" href="<?= uiModuleUrl('subtareas', 'ver', ['id' => $subtarea['id']]) ?>">
-                                                <i class="bi bi-eye me-2"></i>Ver detalles
-                                            </a>
-                                        </li>
-                                        <?php if (hasPermission('subtareas', 'editar')): ?>
-                                        <li>
-                                            <a class="dropdown-item" href="<?= uiModuleUrl('subtareas', 'editar', ['id' => $subtarea['id']]) ?>">
-                                                <i class="bi bi-pencil me-2"></i>Editar
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalTiempo<?= $subtarea['id'] ?>">
-                                                <i class="bi bi-clock me-2"></i>Registrar tiempo
-                                            </a>
-                                        </li>
-                                        <?php endif; ?>
-                                    </ul>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>

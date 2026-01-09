@@ -131,38 +131,27 @@ $empresas = $model->getAll($filters);
                             <?php endif; ?>
                         </td>
                         <td>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
-                                    <i class="bi bi-three-dots-vertical"></i>
+                            <div class="d-flex gap-1 justify-content-end">
+                                <a href="<?= uiModuleUrl('empresas', 'ver', ['id' => $empresa['id']]) ?>" 
+                                   class="btn-icon" title="Ver detalles" data-bs-toggle="tooltip">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <?php if (hasPermission('empresas', 'editar')): ?>
+                                <a href="<?= uiModuleUrl('empresas', 'editar', ['id' => $empresa['id']]) ?>" 
+                                   class="btn-icon btn-icon-primary" title="Editar" data-bs-toggle="tooltip">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <?php endif; ?>
+                                <a href="<?= uiModuleUrl('proyectos', 'index', ['empresa_id' => $empresa['id']]) ?>" 
+                                   class="btn-icon btn-icon-success" title="Ver proyectos" data-bs-toggle="tooltip">
+                                    <i class="bi bi-folder"></i>
+                                </a>
+                                <?php if (hasPermission('empresas', 'eliminar')): ?>
+                                <button type="button" class="btn-icon btn-icon-danger" title="Eliminar" data-bs-toggle="tooltip"
+                                        onclick="confirmDelete('<?= uiModuleUrl('empresas', 'eliminar', ['id' => $empresa['id']]) ?>', 'la empresa <?= htmlspecialchars($empresa['nombre']) ?>')">
+                                    <i class="bi bi-trash"></i>
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <a class="dropdown-item" href="<?= uiModuleUrl('empresas', 'ver', ['id' => $empresa['id']]) ?>">
-                                            <i class="bi bi-eye me-2"></i>Ver detalles
-                                        </a>
-                                    </li>
-                                    <?php if (hasPermission('empresas', 'editar')): ?>
-                                    <li>
-                                        <a class="dropdown-item" href="<?= uiModuleUrl('empresas', 'editar', ['id' => $empresa['id']]) ?>">
-                                            <i class="bi bi-pencil me-2"></i>Editar
-                                        </a>
-                                    </li>
-                                    <?php endif; ?>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item" href="<?= uiModuleUrl('proyectos', 'index', ['empresa_id' => $empresa['id']]) ?>">
-                                            <i class="bi bi-folder me-2"></i>Ver proyectos
-                                        </a>
-                                    </li>
-                                    <?php if (hasPermission('empresas', 'eliminar')): ?>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item text-danger" href="#" onclick="confirmDelete('<?= uiModuleUrl('empresas', 'eliminar', ['id' => $empresa['id']]) ?>', 'la empresa <?= htmlspecialchars($empresa['nombre']) ?>')">
-                                            <i class="bi bi-trash me-2"></i>Eliminar
-                                        </a>
-                                    </li>
-                                    <?php endif; ?>
-                                </ul>
+                                <?php endif; ?>
                             </div>
                         </td>
                     </tr>
