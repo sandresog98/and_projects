@@ -7,11 +7,13 @@ require_once __DIR__ . '/../../ui/modules/proyectos/models/ProyectoModel.php';
 require_once __DIR__ . '/../../ui/modules/reuniones/models/ReunionModel.php';
 require_once __DIR__ . '/../../ui/modules/empresas/models/EmpresaModel.php';
 require_once __DIR__ . '/../../ui/models/TiempoModel.php';
+require_once __DIR__ . '/../../ui/modules/tareas/models/TareaModel.php';
 
 $proyectoModel = new ProyectoModel();
 $reunionModel = new ReunionModel();
 $empresaModel = new EmpresaModel();
 $tiempoModel = new TiempoModel();
+$tareaModel = new TareaModel();
 
 $empresaId = getCurrentClientEmpresaId();
 $empresa = $empresaId ? $empresaModel->getById($empresaId) : null;
@@ -25,6 +27,29 @@ $proyectos = $proyectoModel->getAll([
     'empresa_id' => $empresaId,
     'exclude_cancelled' => true
 ]);
+
+// Calcular avance real de cada proyecto basado en tareas completadas
+foreach ($proyectos as &$proyecto) {
+    if ($proyecto['estado'] == 3) {
+        // Proyecto completado = 100%
+        $proyecto['avance'] = 100;
+    } else {
+        // Obtener tareas del proyecto
+        $tareas = $tareaModel->getByProyecto($proyecto['id']);
+        if (count($tareas) > 0) {
+            // Calcular basado en tareas completadas
+            $tareasCompletadas = count(array_filter($tareas, fn($t) => $t['estado'] == 3));
+            $proyecto['avance'] = round(($tareasCompletadas / count($tareas)) * 100);
+        } elseif ($proyecto['estado'] == 2) {
+            // En progreso sin tareas
+            $proyecto['avance'] = 50;
+        } else {
+            // Usar valor de BD o 0
+            $proyecto['avance'] = $proyecto['avance'] ?? 0;
+        }
+    }
+}
+unset($proyecto); // Liberar referencia
 
 // Obtener reuniones próximas
 $reunionesProximas = $reunionModel->getProximas(14);
@@ -160,7 +185,7 @@ if (!function_exists('getStatusClass')) {
                                     <i class="bi bi-list-task me-1"></i><?= $proy['total_tareas'] ?> tareas
                                 </span>
                             </div>
-                            <span class="<?= $porcentaje > 100 ? 'text-danger' : 'text-muted' ?>" style="font-size: 12px; font-weight: 600;"><?= $porcentaje ?>%</span>
+                            <span class="<?= $porcentaje > 100 ? 'text-danger' : 'text-muted' ?>" style="font-size: 12px; font-weight: 600;" title="Porcentaje de horas consumidas vs estimadas"><?= $porcentaje ?>%</span>
                         </div>
                         <div class="progress" style="height: 4px;">
                             <div class="progress-bar <?= $porcentaje > 100 ? 'bg-danger' : '' ?>" style="width: <?= min($porcentaje, 100) ?>%"></div>
@@ -178,7 +203,7 @@ if (!function_exists('getStatusClass')) {
                                 <th class="text-center">Tareas</th>
                                 <th class="text-center">Horas Registradas</th>
                                 <th class="text-center">Horas Estimadas</th>
-                                <th style="width: 180px;">Progreso</th>
+                                <th style="width: 180px;">Horas Consumidas</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -203,7 +228,7 @@ if (!function_exists('getStatusClass')) {
                                         <div class="progress flex-grow-1" style="height: 6px;">
                                             <div class="progress-bar <?= $porcentaje > 100 ? 'bg-danger' : '' ?>" style="width: <?= min($porcentaje, 100) ?>%"></div>
                                         </div>
-                                        <small class="text-muted" style="min-width: 35px;"><?= $porcentaje ?>%</small>
+                                        <small class="text-muted" style="min-width: 35px;" title="Porcentaje de horas consumidas vs estimadas"><?= $porcentaje ?>%</small>
                                     </div>
                                 </td>
                             </tr>
