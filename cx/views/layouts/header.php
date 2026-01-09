@@ -167,8 +167,8 @@ $empresa = $currentClient['empresa_id'] ? $empresaModel->getById($currentClient[
         }
         
         .cx-empresa-logo {
-            height: 28px;
-            max-width: 100px;
+            height: 42px;
+            max-width: 150px;
             width: auto;
             object-fit: contain;
             background: rgba(255, 255, 255, 0.05);

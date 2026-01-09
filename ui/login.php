@@ -334,6 +334,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             letter-spacing: 1px;
         }
         
+        /* Link clientes */
+        .client-link {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .client-link a {
+            color: #444;
+            font-size: 12px;
+            text-decoration: none;
+            transition: color 0.3s;
+            letter-spacing: 1px;
+        }
+        
+        .client-link a:hover {
+            color: #fff;
+        }
+        
         /* Responsive */
         @media (max-width: 480px) {
             .login-card {
@@ -443,6 +463,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <i class="bi bi-calendar"></i>
                     <span>Reuniones</span>
                 </div>
+            </div>
+            
+            <!-- Link clientes -->
+            <div class="client-link">
+                <a href="<?= APP_BASE_URL ?>/cx/login.php">
+                    <i class="bi bi-building me-1"></i>¿Eres cliente? Accede aquí
+                </a>
             </div>
         </div>
         

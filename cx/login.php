@@ -321,24 +321,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border: 1px solid rgba(248, 113, 113, 0.3);
         }
         
-        /* Link colaboradores */
-        .collaborator-link {
-            text-align: center;
+        /* Features list */
+        .features-mini {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
             margin-top: 30px;
             padding-top: 30px;
             border-top: 1px solid rgba(255,255,255,0.1);
         }
         
-        .collaborator-link a {
-            color: #444;
-            font-size: 12px;
-            text-decoration: none;
-            transition: color 0.3s;
-            letter-spacing: 1px;
+        .feature-mini {
+            text-align: center;
         }
         
-        .collaborator-link a:hover {
-            color: #fff;
+        .feature-mini i {
+            font-size: 20px;
+            color: #666;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .feature-mini span {
+            font-size: 10px;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         /* Footer */
@@ -448,11 +456,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </button>
             </form>
             
-            <!-- Link colaboradores -->
-            <div class="collaborator-link">
-                <a href="<?= APP_BASE_URL ?>/ui/login.php">
-                    <i class="bi bi-person-workspace me-1"></i>¿Eres colaborador? Accede aquí
-                </a>
+            <!-- Mini features -->
+            <div class="features-mini">
+                <div class="feature-mini">
+                    <i class="bi bi-kanban"></i>
+                    <span>Proyectos</span>
+                </div>
+                <div class="feature-mini">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Avances</span>
+                </div>
+                <div class="feature-mini">
+                    <i class="bi bi-chat-dots"></i>
+                    <span>Comentarios</span>
+                </div>
             </div>
         </div>
         
