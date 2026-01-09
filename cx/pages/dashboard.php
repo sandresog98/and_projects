@@ -126,22 +126,51 @@ if (!function_exists('getStatusClass')) {
 <div class="row g-4 mb-4">
     <div class="col-12 fade-in-up" style="animation-delay: 0.45s">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
                 <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Resumen de Horas</h6>
                 <div class="d-flex gap-4">
                     <div class="text-center">
-                        <div class="h4 mb-0" style="color: var(--accent-info);"><?= TiempoModel::formatHoras($horasEmpresa['horas_reales']) ?></div>
+                        <div class="h5 h4-md mb-0" style="color: var(--accent-info);"><?= TiempoModel::formatHoras($horasEmpresa['horas_reales']) ?></div>
                         <small class="text-muted">Registradas</small>
                     </div>
                     <div class="text-center">
-                        <div class="h4 mb-0" style="color: var(--accent-warning);"><?= TiempoModel::formatHoras($horasEmpresa['horas_estimadas']) ?></div>
+                        <div class="h5 h4-md mb-0" style="color: var(--accent-warning);"><?= TiempoModel::formatHoras($horasEmpresa['horas_estimadas']) ?></div>
                         <small class="text-muted">Estimadas</small>
                     </div>
                 </div>
             </div>
             <?php if (!empty($horasPorProyecto)): ?>
             <div class="card-body p-0">
-                <div class="table-responsive">
+                <!-- Vista móvil: Lista de cards -->
+                <div class="d-md-none p-3">
+                    <?php foreach (array_slice($horasPorProyecto, 0, 5) as $proy): ?>
+                    <?php $porcentaje = TiempoModel::calcularPorcentaje($proy['horas_reales'], $proy['horas_estimadas']); ?>
+                    <div class="horas-card-mobile mb-3" onclick="window.location='<?= cxModuleUrl('proyectos', 'ver', ['id' => $proy['id']]) ?>'">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <div style="width: 10px; height: 10px; border-radius: 50%; background: <?= $proy['color'] ?? '#55A5C8' ?>;"></div>
+                            <strong style="color: var(--text-primary); font-size: 14px;"><?= htmlspecialchars($proy['nombre']) ?></strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex gap-3">
+                                <span class="text-muted" style="font-size: 12px;">
+                                    <i class="bi bi-clock me-1" style="color: var(--accent-info);"></i>
+                                    <?= TiempoModel::formatHoras($proy['horas_reales']) ?> / <?= TiempoModel::formatHoras($proy['horas_estimadas']) ?>
+                                </span>
+                                <span class="text-muted" style="font-size: 12px;">
+                                    <i class="bi bi-list-task me-1"></i><?= $proy['total_tareas'] ?> tareas
+                                </span>
+                            </div>
+                            <span class="<?= $porcentaje > 100 ? 'text-danger' : 'text-muted' ?>" style="font-size: 12px; font-weight: 600;"><?= $porcentaje ?>%</span>
+                        </div>
+                        <div class="progress" style="height: 4px;">
+                            <div class="progress-bar <?= $porcentaje > 100 ? 'bg-danger' : '' ?>" style="width: <?= min($porcentaje, 100) ?>%"></div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <!-- Vista desktop: Tabla -->
+                <div class="d-none d-md-block">
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
@@ -187,6 +216,21 @@ if (!function_exists('getStatusClass')) {
         </div>
     </div>
 </div>
+
+<style>
+.horas-card-mobile {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.horas-card-mobile:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+</style>
 <?php endif; ?>
 
 <div class="row g-4">

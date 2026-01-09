@@ -166,6 +166,72 @@ $empresa = $currentClient['empresa_id'] ? $empresaModel->getById($currentClient[
             transform: scale(1.02);
         }
         
+        /* Botón menú móvil */
+        .btn-mobile-menu {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            padding: 8px 12px;
+            font-size: 20px;
+            line-height: 1;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-mobile-menu:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+        
+        /* Offcanvas menú móvil */
+        .cx-mobile-menu {
+            background: rgba(10, 10, 10, 0.98);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 280px;
+        }
+        
+        .cx-mobile-menu .offcanvas-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 20px;
+        }
+        
+        .cx-mobile-menu .offcanvas-body {
+            padding: 20px;
+        }
+        
+        .mobile-nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .mobile-nav-list li {
+            margin-bottom: 8px;
+        }
+        
+        .mobile-nav-list a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 10px;
+            color: #999;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-nav-list a:hover,
+        .mobile-nav-list a.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        
+        .mobile-nav-list a i {
+            font-size: 18px;
+        }
+        
         .cx-empresa-logo {
             height: 42px;
             max-width: 150px;
@@ -971,6 +1037,89 @@ $empresa = $currentClient['empresa_id'] ? $empresaModel->getById($currentClient[
         ::-webkit-scrollbar-thumb:hover {
             background: var(--white-50);
         }
+        
+        /* ============================================
+           RESPONSIVE STYLES
+           ============================================ */
+        
+        /* Tablets y móviles grandes */
+        @media (max-width: 991.98px) {
+            .cx-main {
+                padding: 20px 0;
+            }
+            
+            .welcome-banner {
+                padding: 20px;
+            }
+            
+            .welcome-banner h2 {
+                font-size: 22px;
+            }
+        }
+        
+        /* Móviles */
+        @media (max-width: 767.98px) {
+            .cx-navbar {
+                padding: 10px 0;
+            }
+            
+            .cx-logo {
+                height: 26px;
+            }
+            
+            .cx-main {
+                padding: 15px 0;
+            }
+            
+            .welcome-banner {
+                padding: 16px;
+                margin-bottom: 20px;
+            }
+            
+            .welcome-banner h2 {
+                font-size: 18px;
+            }
+            
+            .card {
+                border-radius: 12px;
+            }
+            
+            .card-header {
+                padding: 14px 16px;
+            }
+            
+            .card-body {
+                padding: 16px;
+            }
+            
+            .card-header h6 {
+                font-size: 14px;
+            }
+            
+            /* Estadísticas móvil */
+            .row.g-4 {
+                --bs-gutter-y: 1rem;
+                --bs-gutter-x: 1rem;
+            }
+        }
+        
+        /* Móviles pequeños */
+        @media (max-width: 575.98px) {
+            .container {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+            
+            .cx-logo {
+                height: 24px;
+            }
+            
+            .user-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -981,14 +1130,19 @@ $empresa = $currentClient['empresa_id'] ? $empresaModel->getById($currentClient[
     <nav class="cx-navbar">
         <div class="container">
             <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-4">
-                    <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-3 gap-md-4">
+                    <!-- Botón menú móvil -->
+                    <button class="btn-mobile-menu d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    
+                    <div class="d-flex align-items-center gap-2 gap-md-3">
                         <a href="<?= cxUrl('index.php') ?>">
                             <img src="<?= assetUrl('img/logo-horizontal-white.png') ?>" alt="<?= APP_NAME ?>" class="cx-logo">
                         </a>
                         <?php if ($empresa && $empresa['logo']): ?>
-                        <span class="logo-divider"></span>
-                        <img src="<?= UPLOADS_URL . '/' . $empresa['logo'] ?>" alt="<?= htmlspecialchars($empresa['nombre']) ?>" class="cx-empresa-logo">
+                        <span class="logo-divider d-none d-sm-block"></span>
+                        <img src="<?= UPLOADS_URL . '/' . $empresa['logo'] ?>" alt="<?= htmlspecialchars($empresa['nombre']) ?>" class="cx-empresa-logo d-none d-sm-block">
                         <?php endif; ?>
                     </div>
                     
@@ -1046,6 +1200,62 @@ $empresa = $currentClient['empresa_id'] ? $empresaModel->getById($currentClient[
             </div>
         </div>
     </nav>
+    
+    <!-- Menú Móvil Offcanvas -->
+    <div class="offcanvas offcanvas-start cx-mobile-menu" tabindex="-1" id="mobileMenu">
+        <div class="offcanvas-header">
+            <div class="d-flex align-items-center gap-2">
+                <img src="<?= assetUrl('img/logo-horizontal-white.png') ?>" alt="<?= APP_NAME ?>" style="height: 28px; filter: brightness(0) invert(1);">
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <?php if ($empresa && $empresa['logo']): ?>
+            <div class="mobile-empresa-info mb-4 pb-3 border-bottom border-secondary">
+                <img src="<?= UPLOADS_URL . '/' . $empresa['logo'] ?>" alt="<?= htmlspecialchars($empresa['nombre']) ?>" style="height: 40px; max-width: 120px; object-fit: contain;">
+                <p class="mb-0 mt-2 text-muted small"><?= htmlspecialchars($empresa['nombre']) ?></p>
+            </div>
+            <?php endif; ?>
+            
+            <ul class="mobile-nav-list">
+                <li>
+                    <a href="<?= cxUrl('index.php') ?>" class="<?= empty($currentModule) ? 'active' : '' ?>">
+                        <i class="bi bi-house"></i> Inicio
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= cxModuleUrl('proyectos') ?>" class="<?= $currentModule === 'proyectos' ? 'active' : '' ?>">
+                        <i class="bi bi-kanban"></i> Proyectos
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= cxModuleUrl('calendario') ?>" class="<?= $currentModule === 'calendario' ? 'active' : '' ?>">
+                        <i class="bi bi-calendar3"></i> Calendario
+                    </a>
+                </li>
+            </ul>
+            
+            <hr class="my-4 border-secondary">
+            
+            <div class="mobile-user-info">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="user-avatar" style="width: 40px; height: 40px;">
+                        <?= strtoupper(substr($currentClient['nombre'], 0, 1)) ?>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-white"><?= htmlspecialchars($currentClient['nombre']) ?></div>
+                        <small class="text-muted"><?= htmlspecialchars($currentClient['email']) ?></small>
+                    </div>
+                </div>
+                <a href="<?= cxModuleUrl('perfil') ?>" class="btn btn-outline-secondary btn-sm w-100 mb-2">
+                    <i class="bi bi-person me-2"></i>Mi Perfil
+                </a>
+                <a href="<?= cxUrl('logout.php') ?>" class="btn btn-outline-danger btn-sm w-100">
+                    <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+                </a>
+            </div>
+        </div>
+    </div>
     
     <!-- Main Content -->
     <main class="cx-main">
