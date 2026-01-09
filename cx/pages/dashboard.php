@@ -28,7 +28,13 @@ $proyectos = $proyectoModel->getAll([
     'exclude_cancelled' => true
 ]);
 
-// Calcular avance real de cada proyecto basado en tareas completadas
+// Crear un mapa de horas por proyecto para facilitar la combinación
+$horasMap = [];
+foreach ($horasPorProyecto as $horasProy) {
+    $horasMap[$horasProy['id']] = $horasProy;
+}
+
+// Calcular avance real de cada proyecto y combinar con información de horas
 foreach ($proyectos as &$proyecto) {
     if ($proyecto['estado'] == 3) {
         // Proyecto completado = 100%
@@ -47,6 +53,17 @@ foreach ($proyectos as &$proyecto) {
             // Usar valor de BD o 0
             $proyecto['avance'] = $proyecto['avance'] ?? 0;
         }
+    }
+    
+    // Combinar con información de horas si existe
+    if (isset($horasMap[$proyecto['id']])) {
+        $proyecto['horas_reales'] = $horasMap[$proyecto['id']]['horas_reales'];
+        $proyecto['horas_estimadas'] = $horasMap[$proyecto['id']]['horas_estimadas'];
+        $proyecto['porcentaje_horas'] = TiempoModel::calcularPorcentaje($proyecto['horas_reales'], $proyecto['horas_estimadas']);
+    } else {
+        $proyecto['horas_reales'] = 0;
+        $proyecto['horas_estimadas'] = 0;
+        $proyecto['porcentaje_horas'] = 0;
     }
 }
 unset($proyecto); // Liberar referencia
@@ -146,125 +163,26 @@ if (!function_exists('getStatusClass')) {
     </div>
 </div>
 
-<!-- Resumen de Horas -->
+<!-- Mis Proyectos - Vista Unificada -->
 <?php if ($empresaId): ?>
 <div class="row g-4 mb-4">
     <div class="col-12 fade-in-up" style="animation-delay: 0.45s">
         <div class="card">
             <div class="card-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
-                <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Resumen de Horas</h6>
+                <div>
+                    <h6 class="mb-0"><i class="bi bi-kanban me-2"></i>Mis Proyectos</h6>
+                    <small class="text-muted">Progreso y horas de tus proyectos</small>
+                </div>
                 <div class="d-flex gap-4">
                     <div class="text-center">
                         <div class="h5 h4-md mb-0" style="color: var(--accent-info);"><?= TiempoModel::formatHoras($horasEmpresa['horas_reales']) ?></div>
-                        <small class="text-muted">Registradas</small>
+                        <small class="text-muted">Horas Registradas</small>
                     </div>
                     <div class="text-center">
                         <div class="h5 h4-md mb-0" style="color: var(--accent-warning);"><?= TiempoModel::formatHoras($horasEmpresa['horas_estimadas']) ?></div>
-                        <small class="text-muted">Estimadas</small>
+                        <small class="text-muted">Horas Estimadas</small>
                     </div>
                 </div>
-            </div>
-            <?php if (!empty($horasPorProyecto)): ?>
-            <div class="card-body p-0">
-                <!-- Vista móvil: Lista de cards -->
-                <div class="d-md-none p-3">
-                    <?php foreach (array_slice($horasPorProyecto, 0, 5) as $proy): ?>
-                    <?php $porcentaje = TiempoModel::calcularPorcentaje($proy['horas_reales'], $proy['horas_estimadas']); ?>
-                    <div class="horas-card-mobile mb-3" onclick="window.location='<?= cxModuleUrl('proyectos', 'ver', ['id' => $proy['id']]) ?>'">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <div style="width: 10px; height: 10px; border-radius: 50%; background: <?= $proy['color'] ?? '#55A5C8' ?>;"></div>
-                            <strong style="color: var(--text-primary); font-size: 14px;"><?= htmlspecialchars($proy['nombre']) ?></strong>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="d-flex gap-3">
-                                <span class="text-muted" style="font-size: 12px;">
-                                    <i class="bi bi-clock me-1" style="color: var(--accent-info);"></i>
-                                    <?= TiempoModel::formatHoras($proy['horas_reales']) ?> / <?= TiempoModel::formatHoras($proy['horas_estimadas']) ?>
-                                </span>
-                                <span class="text-muted" style="font-size: 12px;">
-                                    <i class="bi bi-list-task me-1"></i><?= $proy['total_tareas'] ?> tareas
-                                </span>
-                            </div>
-                            <span class="<?= $porcentaje > 100 ? 'text-danger' : 'text-muted' ?>" style="font-size: 12px; font-weight: 600;" title="Porcentaje de horas consumidas vs estimadas"><?= $porcentaje ?>%</span>
-                        </div>
-                        <div class="progress" style="height: 4px;">
-                            <div class="progress-bar <?= $porcentaje > 100 ? 'bg-danger' : '' ?>" style="width: <?= min($porcentaje, 100) ?>%"></div>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-                
-                <!-- Vista desktop: Tabla -->
-                <div class="d-none d-md-block">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Proyecto</th>
-                                <th class="text-center">Tareas</th>
-                                <th class="text-center">Horas Registradas</th>
-                                <th class="text-center">Horas Estimadas</th>
-                                <th style="width: 180px;">Horas Consumidas</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach (array_slice($horasPorProyecto, 0, 5) as $proy): ?>
-                            <?php $porcentaje = TiempoModel::calcularPorcentaje($proy['horas_reales'], $proy['horas_estimadas']); ?>
-                            <tr class="cursor-pointer" onclick="window.location='<?= cxModuleUrl('proyectos', 'ver', ['id' => $proy['id']]) ?>'">
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div style="width: 10px; height: 10px; border-radius: 50%; background: <?= $proy['color'] ?? '#55A5C8' ?>;"></div>
-                                        <strong style="color: var(--text-primary);"><?= htmlspecialchars($proy['nombre']) ?></strong>
-                                    </div>
-                                </td>
-                                <td class="text-center"><?= $proy['total_tareas'] ?></td>
-                                <td class="text-center">
-                                    <span style="color: var(--accent-info);"><?= TiempoModel::formatHoras($proy['horas_reales']) ?></span>
-                                </td>
-                                <td class="text-center">
-                                    <span class="text-muted"><?= TiempoModel::formatHoras($proy['horas_estimadas']) ?></span>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="progress flex-grow-1" style="height: 6px;">
-                                            <div class="progress-bar <?= $porcentaje > 100 ? 'bg-danger' : '' ?>" style="width: <?= min($porcentaje, 100) ?>%"></div>
-                                        </div>
-                                        <small class="text-muted" style="min-width: 35px;" title="Porcentaje de horas consumidas vs estimadas"><?= $porcentaje ?>%</small>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <?php endif; ?>
-        </div>
-    </div>
-</div>
-
-<style>
-.horas-card-mobile {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    padding: 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-.horas-card-mobile:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.15);
-}
-</style>
-<?php endif; ?>
-
-<div class="row g-4">
-    <!-- Proyectos recientes -->
-    <div class="col-lg-8 fade-in-up" style="animation-delay: 0.5s">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0"><i class="bi bi-kanban me-2"></i>Mis Proyectos</h6>
-                <a href="<?= cxModuleUrl('proyectos') ?>" class="btn btn-sm btn-outline-primary">Ver todos</a>
             </div>
             <div class="card-body p-0">
                 <?php if (empty($proyectos)): ?>
@@ -273,45 +191,125 @@ if (!function_exists('getStatusClass')) {
                     <p class="text-muted mt-3">No hay proyectos disponibles</p>
                 </div>
                 <?php else: ?>
-                <div class="table-responsive">
-                    <table class="table mb-0">
+                <!-- Vista móvil: Lista de cards -->
+                <div class="d-md-none p-3">
+                    <?php foreach (array_slice($proyectos, 0, 5) as $proyecto): ?>
+                    <div class="proyecto-card-mobile mb-3" onclick="window.location='<?= cxModuleUrl('proyectos', 'ver', ['id' => $proyecto['id']]) ?>'">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <div class="status-dot <?= getStatusClass($proyecto['estado']) ?>"></div>
+                            <div style="width: 10px; height: 10px; border-radius: 50%; background: <?= $proyecto['color'] ?? '#55A5C8' ?>;"></div>
+                            <strong style="color: var(--text-primary); font-size: 14px;"><?= htmlspecialchars($proyecto['nombre']) ?></strong>
+                            <span class="badge badge-status-<?= $proyecto['estado'] ?> ms-auto"><?= getStatusText($proyecto['estado']) ?></span>
+                        </div>
+                        
+                        <!-- Avance del proyecto -->
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small class="text-muted">Avance</small>
+                                <strong style="font-size: 12px;"><?= $proyecto['avance'] ?>%</strong>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar" style="width: <?= $proyecto['avance'] ?>%"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Información de horas -->
+                        <?php if ($proyecto['horas_estimadas'] > 0): ?>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-1" style="color: var(--accent-info);"></i>
+                                    <?= TiempoModel::formatHoras($proyecto['horas_reales']) ?> / <?= TiempoModel::formatHoras($proyecto['horas_estimadas']) ?>
+                                </small>
+                                <span class="<?= $proyecto['porcentaje_horas'] > 100 ? 'text-danger' : 'text-muted' ?>" style="font-size: 12px; font-weight: 600;" title="Porcentaje de horas consumidas"><?= $proyecto['porcentaje_horas'] ?>%</span>
+                            </div>
+                            <div class="progress" style="height: 4px;">
+                                <div class="progress-bar <?= $proyecto['porcentaje_horas'] > 100 ? 'bg-danger' : '' ?>" style="width: <?= min($proyecto['porcentaje_horas'], 100) ?>%"></div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <!-- Info adicional -->
+                        <div class="d-flex gap-3 text-muted" style="font-size: 11px;">
+                            <span><i class="bi bi-list-task me-1"></i><?= $proyecto['total_tareas'] ?? 0 ?> tareas</span>
+                            <?php if ($proyecto['fecha_fin_estimada']): ?>
+                            <span><i class="bi bi-flag me-1"></i><?= formatDate($proyecto['fecha_fin_estimada']) ?></span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <!-- Vista desktop: Tabla unificada -->
+                <div class="d-none d-md-block">
+                    <table class="table table-hover mb-0">
                         <thead>
                             <tr>
                                 <th>Proyecto</th>
-                                <th>Avance</th>
-                                <th>Estado</th>
-                                <th></th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-center">Avance</th>
+                                <th class="text-center">Tareas</th>
+                                <th class="text-center">Horas</th>
+                                <th class="text-center" style="width: 150px;">Horas Consumidas</th>
+                                <th style="width: 60px;"></th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach (array_slice($proyectos, 0, 5) as $proyecto): ?>
-                            <tr>
+                            <tr class="cursor-pointer" onclick="window.location='<?= cxModuleUrl('proyectos', 'ver', ['id' => $proyecto['id']]) ?>'">
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="status-dot <?= getStatusClass($proyecto['estado']) ?>"></div>
+                                        <div style="width: 10px; height: 10px; border-radius: 50%; background: <?= $proyecto['color'] ?? '#55A5C8' ?>;"></div>
                                         <div>
-                                            <strong><?= htmlspecialchars($proyecto['nombre']) ?></strong>
+                                            <strong style="color: var(--text-primary);"><?= htmlspecialchars($proyecto['nombre']) ?></strong>
                                             <?php if ($proyecto['fecha_fin_estimada']): ?>
                                             <br><small class="text-muted">Entrega: <?= formatDate($proyecto['fecha_fin_estimada']) ?></small>
                                             <?php endif; ?>
                                         </div>
                                     </div>
                                 </td>
-                                <td style="width: 150px;">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="progress flex-grow-1">
-                                            <div class="progress-bar" style="width: <?= $proyecto['avance'] ?>%"></div>
-                                        </div>
-                                        <small class="text-muted"><?= $proyecto['avance'] ?>%</small>
-                                    </div>
-                                </td>
-                                <td>
+                                <td class="text-center">
                                     <span class="badge badge-status-<?= $proyecto['estado'] ?>">
                                         <?= getStatusText($proyecto['estado']) ?>
                                     </span>
                                 </td>
-                                <td>
-                                    <a href="<?= cxModuleUrl('proyectos', 'ver', ['id' => $proyecto['id']]) ?>" class="btn btn-sm btn-outline-primary">
+                                <td class="text-center">
+                                    <div class="d-flex align-items-center gap-2 justify-content-center">
+                                        <div class="progress" style="width: 80px; height: 6px;">
+                                            <div class="progress-bar" style="width: <?= $proyecto['avance'] ?>%"></div>
+                                        </div>
+                                        <small class="text-muted" style="min-width: 35px;"><?= $proyecto['avance'] ?>%</small>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-muted"><?= $proyecto['total_tareas'] ?? 0 ?></span>
+                                </td>
+                                <td class="text-center">
+                                    <?php if ($proyecto['horas_estimadas'] > 0): ?>
+                                    <div>
+                                        <span style="color: var(--accent-info);"><?= TiempoModel::formatHoras($proyecto['horas_reales']) ?></span>
+                                        <span class="text-muted"> / </span>
+                                        <span class="text-muted"><?= TiempoModel::formatHoras($proyecto['horas_estimadas']) ?></span>
+                                    </div>
+                                    <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="text-center">
+                                    <?php if ($proyecto['horas_estimadas'] > 0): ?>
+                                    <div class="d-flex align-items-center gap-2 justify-content-center">
+                                        <div class="progress" style="width: 80px; height: 6px;">
+                                            <div class="progress-bar <?= $proyecto['porcentaje_horas'] > 100 ? 'bg-danger' : '' ?>" style="width: <?= min($proyecto['porcentaje_horas'], 100) ?>%"></div>
+                                        </div>
+                                        <small class="text-muted" style="min-width: 35px;" title="Porcentaje de horas consumidas vs estimadas"><?= $proyecto['porcentaje_horas'] ?>%</small>
+                                    </div>
+                                    <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="text-center">
+                                    <a href="<?= cxModuleUrl('proyectos', 'ver', ['id' => $proyecto['id']]) ?>" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                 </td>
@@ -322,11 +320,38 @@ if (!function_exists('getStatusClass')) {
                 </div>
                 <?php endif; ?>
             </div>
+            <?php if (!empty($proyectos) && count($proyectos) > 5): ?>
+            <div class="card-footer bg-transparent border-top" style="border-color: var(--border-color) !important;">
+                <div class="text-center">
+                    <a href="<?= cxModuleUrl('proyectos') ?>" class="btn btn-sm btn-outline-primary">
+                        Ver todos los proyectos (<?= count($proyectos) ?>)
+                    </a>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
-    
+</div>
+
+<style>
+.proyecto-card-mobile {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.proyecto-card-mobile:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+</style>
+<?php endif; ?>
+
+<div class="row g-4">
     <!-- Próximas reuniones -->
-    <div class="col-lg-4 fade-in-up" style="animation-delay: 0.6s">
+    <div class="col-12 col-lg-4 fade-in-up" style="animation-delay: 0.6s">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Próximas Reuniones</h6>
