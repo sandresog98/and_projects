@@ -126,8 +126,13 @@ class TareaModel {
         
         foreach ($allowedFields as $field) {
             if (array_key_exists($field, $data)) {
-                $fields[] = "$field = :$field";
-                $params[$field] = $data[$field];
+                if ($data[$field] === null) {
+                    // Para valores NULL, usar sintaxis SQL directa
+                    $fields[] = "$field = NULL";
+                } else {
+                    $fields[] = "$field = :$field";
+                    $params[$field] = $data[$field];
+                }
             }
         }
         
@@ -153,7 +158,7 @@ class TareaModel {
                         ROUND(SUM(CASE WHEN estado = 3 THEN 1 ELSE 0 END) / COUNT(*) * 100, 2), 
                         0
                     )
-                    FROM proyectos_subtareas WHERE tarea_id = :tarea_id
+                    FROM proyectos_subtareas WHERE tarea_id = :tarea_id AND estado != 5
                 )
                 WHERE id = :id";
         
@@ -165,28 +170,45 @@ class TareaModel {
     }
     
     private function actualizarEstadoAutomatico(int $tareaId): void {
-        $tarea = $this->getById($tareaId);
+        // Obtener estado actual de la tarea directamente de la BD
+        $sqlTarea = "SELECT estado FROM {$this->table} WHERE id = :id";
+        $stmtTarea = $this->db->prepare($sqlTarea);
+        $stmtTarea->execute(['id' => $tareaId]);
+        $tarea = $stmtTarea->fetch(PDO::FETCH_ASSOC);
+        
         if (!$tarea) return;
         
-        // Obtener subtareas
-        $sql = "SELECT estado FROM proyectos_subtareas WHERE tarea_id = :tarea_id";
+        // Obtener subtareas (excluyendo canceladas)
+        $sql = "SELECT estado FROM proyectos_subtareas WHERE tarea_id = :tarea_id AND estado != 5";
         $stmt = $this->db->prepare($sql);
         $stmt->execute(['tarea_id' => $tareaId]);
-        $subtareas = $stmt->fetchAll();
+        $subtareas = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         if (empty($subtareas)) return;
         
-        $estados = array_column($subtareas, 'estado');
+        $estados = array_map('intval', array_column($subtareas, 'estado'));
+        $estadoTarea = (int)$tarea['estado'];
         
-        if (count(array_unique($estados)) === 1 && $estados[0] == 3) {
-            // Todas completadas
-            $this->update($tareaId, [
-                'estado' => 3,
-                'fecha_fin_real' => date('Y-m-d')
-            ]);
-        } elseif (in_array(2, $estados)) {
-            // Al menos una en progreso
-            if ($tarea['estado'] == 1) {
+        // Si todas las subtareas están completadas, marcar tarea como completada
+        $todasCompletadas = count(array_unique($estados)) === 1 && $estados[0] == 3;
+        
+        if ($todasCompletadas) {
+            if ($estadoTarea != 3) {
+                $this->update($tareaId, [
+                    'estado' => 3,
+                    'fecha_fin_real' => date('Y-m-d')
+                ]);
+            }
+        } else {
+            // Hay subtareas pendientes (1) o en progreso (2)
+            // Si la tarea está finalizada (3), reabrirla a "en progreso"
+            if ($estadoTarea == 3) {
+                $this->update($tareaId, [
+                    'estado' => 2, // En progreso
+                    'fecha_fin_real' => null
+                ]);
+            } elseif ($estadoTarea == 1 && in_array(2, $estados)) {
+                // Si la tarea está pendiente pero hay subtareas en progreso, marcar como en progreso
                 $this->update($tareaId, ['estado' => 2]);
             }
         }
