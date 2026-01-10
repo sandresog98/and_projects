@@ -7,10 +7,8 @@ $pageTitle = 'Mis Proyectos';
 $pageSubtitle = 'Visualiza el progreso de tus proyectos';
 
 require_once __DIR__ . '/../../../../ui/modules/proyectos/models/ProyectoModel.php';
-require_once __DIR__ . '/../../../../ui/modules/tareas/models/TareaModel.php';
 
 $model = new ProyectoModel();
-$tareaModel = new TareaModel();
 $empresaId = getCurrentClientEmpresaId();
 
 // Filtros
@@ -23,29 +21,6 @@ $filters = [
 if ($estado !== '') $filters['estado'] = (int)$estado;
 
 $proyectos = $model->getAll($filters);
-
-// Calcular avance real de cada proyecto basado en tareas completadas
-foreach ($proyectos as &$proyecto) {
-    if ($proyecto['estado'] == 3) {
-        // Proyecto completado = 100%
-        $proyecto['avance'] = 100;
-    } else {
-        // Obtener tareas del proyecto
-        $tareas = $tareaModel->getByProyecto($proyecto['id']);
-        if (count($tareas) > 0) {
-            // Calcular basado en tareas completadas
-            $tareasCompletadas = count(array_filter($tareas, fn($t) => $t['estado'] == 3));
-            $proyecto['avance'] = round(($tareasCompletadas / count($tareas)) * 100);
-        } elseif ($proyecto['estado'] == 2) {
-            // En progreso sin tareas
-            $proyecto['avance'] = 50;
-        } else {
-            // Usar valor de BD o 0
-            $proyecto['avance'] = $proyecto['avance'] ?? 0;
-        }
-    }
-}
-unset($proyecto); // Liberar referencia
 
 // Funciones helper
 if (!function_exists('getStatusText')) {

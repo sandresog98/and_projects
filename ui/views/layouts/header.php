@@ -296,6 +296,14 @@ $currentModule = $currentModule ?? '';
             color: #666;
             margin: 0;
         }
+        
+        /* Modal z-index fix para estar sobre el sidebar */
+        .modal-backdrop {
+            z-index: 1050 !important;
+        }
+        .modal {
+            z-index: 1055 !important;
+        }
     </style>
 </head>
 <body>

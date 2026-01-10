@@ -29,7 +29,8 @@ $formData = [
     'fecha_inicio_estimada' => date('Y-m-d'),
     'fecha_fin_estimada' => '',
     'prioridad' => '2',
-    'asignado_id' => ''
+    'asignado_id' => '',
+    'predecesora_id' => ''
 ];
 
 // Procesar formulario
@@ -59,6 +60,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'creado_por' => getCurrentUserId()
             ]);
             
+            // Guardar dependencia si se seleccionó una tarea predecesora
+            if (!empty($formData['predecesora_id'])) {
+                $model->setDependencia($id, (int)$formData['predecesora_id']);
+            }
+            
             setFlashMessage('success', 'Tarea creada correctamente');
             
             // Redirigir al proyecto si vino desde allí
@@ -73,6 +79,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Error al crear la tarea: ' . $e->getMessage();
         }
     }
+}
+
+// Obtener tareas predecesoras si ya hay un proyecto seleccionado
+$tareasPredecesoras = [];
+if (!empty($formData['proyecto_id'])) {
+    $tareasPredecesoras = $model->getTareasPredecesoras((int)$formData['proyecto_id']);
 }
 ?>
 
@@ -155,6 +167,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </select>
                         </div>
                         
+                        <!-- Dependencias -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-muted mb-3"><i class="bi bi-diagram-3 me-2"></i>Dependencias</h6>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Depende de (Tarea Predecesora)</label>
+                            <select name="predecesora_id" id="predecesora_id" class="form-select">
+                                <option value="">Sin dependencia - Tarea independiente</option>
+                                <?php foreach ($tareasPredecesoras as $tarea): ?>
+                                <option value="<?= $tarea['id'] ?>" <?= $formData['predecesora_id'] == $tarea['id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($tarea['nombre']) ?> 
+                                    <span class="text-muted">(<?= $tarea['estado_texto'] ?>)</span>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Si selecciona una tarea predecesora, esta tarea no podrá iniciarse hasta que la predecesora esté completada.
+                            </small>
+                        </div>
+                        
                         <!-- Fechas -->
                         <div class="col-12 mt-4">
                             <h6 class="text-muted mb-3"><i class="bi bi-calendar me-2"></i>Planificación</h6>
@@ -186,4 +220,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const proyectoSelect = document.querySelector('select[name="proyecto_id"]');
+    const predecesoraSelect = document.getElementById('predecesora_id');
+    
+    proyectoSelect.addEventListener('change', function() {
+        const proyectoId = this.value;
+        
+        // Limpiar select de predecesoras
+        predecesoraSelect.innerHTML = '<option value="">Cargando...</option>';
+        
+        if (!proyectoId) {
+            predecesoraSelect.innerHTML = '<option value="">Sin dependencia - Tarea independiente</option>';
+            return;
+        }
+        
+        // Cargar tareas del proyecto
+        fetch('<?= uiModuleUrl('tareas', 'api/predecesoras') ?>&proyecto_id=' + proyectoId)
+            .then(response => response.json())
+            .then(data => {
+                predecesoraSelect.innerHTML = '<option value="">Sin dependencia - Tarea independiente</option>';
+                data.forEach(tarea => {
+                    const option = document.createElement('option');
+                    option.value = tarea.id;
+                    option.textContent = tarea.nombre + ' (' + tarea.estado_texto + ')';
+                    predecesoraSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                predecesoraSelect.innerHTML = '<option value="">Sin dependencia - Tarea independiente</option>';
+            });
+    });
+});
+</script>
 

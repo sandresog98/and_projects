@@ -168,14 +168,31 @@ document.querySelectorAll('.auto-submit').forEach(select => {
                         $avance = $tarea['total_subtareas'] > 0 
                             ? round(($tarea['subtareas_completadas'] / $tarea['total_subtareas']) * 100) 
                             : 0;
+                        // Obtener info de dependencia
+                        $predecesora = $model->getTareaPredecesora($tarea['id']);
+                        $estaBloqueada = $predecesora && $predecesora['estado'] != 3;
                     ?>
-                    <tr>
+                    <tr class="<?= $estaBloqueada ? 'opacity-75' : '' ?>">
                         <td>
                             <div class="d-flex align-items-center gap-2">
+                                <?php if ($estaBloqueada): ?>
+                                <i class="bi bi-lock-fill text-warning"></i>
+                                <?php else: ?>
                                 <div style="width: 8px; height: 8px; border-radius: 50%; background: <?= $tarea['proyecto_color'] ?>;"></div>
+                                <?php endif; ?>
                                 <div>
                                     <strong><?= htmlspecialchars($tarea['nombre']) ?></strong>
+                                    <?php if ($predecesora): ?>
+                                    <br><small class="<?= $estaBloqueada ? 'text-warning' : 'text-muted' ?>">
+                                        <i class="bi bi-arrow-return-right me-1"></i>
+                                        Depende de: <?= htmlspecialchars($predecesora['nombre']) ?>
+                                        <?php if ($estaBloqueada): ?>
+                                        <span class="badge bg-warning text-dark ms-1" style="font-size: 10px;">Bloqueada</span>
+                                        <?php endif; ?>
+                                    </small>
+                                    <?php else: ?>
                                     <br><small class="text-muted"><?= $tarea['total_subtareas'] ?> subtareas</small>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </td>

@@ -47,6 +47,11 @@ $avance = $totalSubtareas > 0 ? round(($subtareasCompletadas / $totalSubtareas) 
 $horasTarea = $tiempoModel->getHorasTarea($id);
 $porcentajeHoras = TiempoModel::calcularPorcentaje($horasTarea['horas_reales'], $horasTarea['horas_estimadas']);
 
+// Obtener información de dependencias
+$predecesora = $model->getTareaPredecesora($id);
+$sucesoras = $model->getTareasSucesoras($id);
+$estaBloqueada = $predecesora && $predecesora['estado'] != 3;
+
 // Procesar nuevo comentario
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comentario'])) {
     $comentarioTexto = trim($_POST['comentario']);
@@ -102,6 +107,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comentario'])) {
         </a>
     </div>
 </div>
+
+<!-- Alerta de Bloqueo -->
+<?php if ($estaBloqueada): ?>
+<div class="alert alert-warning d-flex align-items-center mb-4 fade-in-up">
+    <i class="bi bi-lock-fill fs-4 me-3"></i>
+    <div>
+        <strong>Tarea Bloqueada</strong><br>
+        Esta tarea depende de <a href="<?= uiModuleUrl('tareas', 'ver', ['id' => $predecesora['id']]) ?>" class="alert-link">"<?= htmlspecialchars($predecesora['nombre']) ?>"</a> 
+        que aún no está completada. 
+        <span class="badge badge-status-<?= $predecesora['estado'] ?> ms-1"><?= getStatusText($predecesora['estado']) ?></span>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- Info de Dependencias -->
+<?php if ($predecesora || !empty($sucesoras)): ?>
+<div class="card mb-4 fade-in-up">
+    <div class="card-body py-3">
+        <div class="d-flex align-items-center gap-2 mb-0">
+            <i class="bi bi-diagram-3 text-muted"></i>
+            <span class="fw-medium">Dependencias:</span>
+            <?php if ($predecesora): ?>
+            <span class="badge bg-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Depende de: 
+                <a href="<?= uiModuleUrl('tareas', 'ver', ['id' => $predecesora['id']]) ?>" class="text-white text-decoration-none">
+                    <?= htmlspecialchars($predecesora['nombre']) ?>
+                </a>
+            </span>
+            <?php endif; ?>
+            <?php foreach ($sucesoras as $sucesora): ?>
+            <span class="badge bg-info">
+                <i class="bi bi-arrow-right me-1"></i>Bloquea: 
+                <a href="<?= uiModuleUrl('tareas', 'ver', ['id' => $sucesora['id']]) ?>" class="text-white text-decoration-none">
+                    <?= htmlspecialchars($sucesora['nombre']) ?>
+                </a>
+            </span>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Estadísticas -->
 <div class="row g-4 mb-4">

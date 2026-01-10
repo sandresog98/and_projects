@@ -150,7 +150,14 @@ if (!function_exists('getStatusClass')) {
         <div class="card mb-4 fade-in-up">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="mb-0"><i class="bi bi-list-task me-2"></i>Tareas del Proyecto</h6>
-                <span class="badge bg-secondary"><?= count($tareas) ?> tareas</span>
+                <div class="d-flex gap-2 align-items-center">
+                    <?php if (!empty($tareas)): ?>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalArbolDependencias">
+                        <i class="bi bi-diagram-3 me-1"></i>Ver Árbol
+                    </button>
+                    <?php endif; ?>
+                    <span class="badge bg-secondary"><?= count($tareas) ?> tareas</span>
+                </div>
             </div>
             <div class="card-body p-0">
                 <?php if (empty($tareas)): ?>
@@ -372,4 +379,414 @@ if (!function_exists('getStatusClass')) {
         </div>
     </div>
 </div>
+
+<!-- Modal Árbol de Dependencias -->
+<div class="modal fade" id="modalArbolDependencias" tabindex="-1" aria-labelledby="modalArbolDependenciasLabel" aria-hidden="true" style="z-index: 9999 !important;">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="z-index: 10000 !important;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalArbolDependenciasLabel">
+                    <i class="bi bi-diagram-3 me-2"></i>Árbol de Dependencias - <?= htmlspecialchars($proyecto['nombre']) ?>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <?php if (empty($tareas)): ?>
+                    <div class="text-center py-5">
+                        <i class="bi bi-diagram-3 text-muted" style="font-size: 48px;"></i>
+                        <p class="text-muted mt-3">No hay tareas en este proyecto</p>
+                    </div>
+                <?php else: ?>
+                    <div class="dependency-tree-container">
+                        <div class="dependency-tree">
+                            <?php
+                            // Construir el árbol visual
+                            function renderDependencyTreeVisualCX($tareas, $allTareas, $dependencias, $isChild = false, &$renderedIds = []) {
+                                $output = '';
+                                
+                                foreach ($tareas as $tarea) {
+                                    if (in_array($tarea['id'], $renderedIds)) continue;
+                                    $renderedIds[] = $tarea['id'];
+                                    
+                                    $isBlocked = ($tarea['estado'] ?? 1) == 4;
+                                    $isCompleted = ($tarea['estado'] ?? 1) == 3;
+                                    $isInProgress = ($tarea['estado'] ?? 1) == 2;
+                                    
+                                    $statusClass = $isCompleted ? 'completed' : ($isInProgress ? 'in-progress' : ($isBlocked ? 'blocked' : 'pending'));
+                                    $statusIcon = $isCompleted ? 'bi-check-circle-fill' : ($isBlocked ? 'bi-exclamation-circle-fill' : ($isInProgress ? 'bi-play-circle-fill' : 'bi-circle'));
+                                    $statusColor = $isCompleted ? '#9AD082' : ($isBlocked ? '#dc3545' : ($isInProgress ? '#55A5C8' : '#6c757d'));
+                                    
+                                    // URL de la tarea (CX)
+                                    $tareaUrl = cxModuleUrl('tareas', 'ver', ['id' => $tarea['id']]);
+                                    
+                                    // Buscar tareas que dependen de esta
+                                    $children = [];
+                                    foreach ($dependencias as $dep) {
+                                        if ($dep['id_origen'] == $tarea['id']) {
+                                            foreach ($allTareas as $t) {
+                                                if ($t['id'] == $dep['id_destino'] && !in_array($t['id'], $renderedIds)) {
+                                                    $children[] = $t;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    
+                                    $hasChildren = !empty($children);
+                                    $parentClass = $isChild ? 'has-parent' : '';
+                                    
+                                    $output .= '<div class="tree-node ' . $statusClass . ' ' . $parentClass . '">';
+                                    $output .= '<a href="' . $tareaUrl . '" class="tree-node-content">';
+                                    $output .= '<i class="bi ' . $statusIcon . ' tree-node-icon" style="color: ' . $statusColor . '"></i>';
+                                    $output .= '<span class="tree-node-name" title="' . htmlspecialchars($tarea['nombre']) . '">' . htmlspecialchars($tarea['nombre']) . '</span>';
+                                    $output .= '<span class="tree-node-badge badge-status-' . ($tarea['estado'] ?? 1) . '">' . getStatusText($tarea['estado'] ?? 1) . '</span>';
+                                    if ($isBlocked) {
+                                        $output .= '<span class="tree-node-warning" title="Requiere predecesora completada"><i class="bi bi-lock-fill"></i></span>';
+                                    }
+                                    if ($hasChildren) {
+                                        $output .= '<span class="tree-node-children-count" title="Tareas dependientes"><i class="bi bi-arrow-down-short"></i>' . count($children) . '</span>';
+                                    }
+                                    $output .= '</a>';
+                                    
+                                    if ($hasChildren) {
+                                        $output .= '<div class="tree-children">';
+                                        $output .= renderDependencyTreeVisualCX($children, $allTareas, $dependencias, true, $renderedIds);
+                                        $output .= '</div>';
+                                    }
+                                    
+                                    $output .= '</div>';
+                                }
+                                
+                                return $output;
+                            }
+                            
+                            // Obtener dependencias
+                            $sqlDeps = "SELECT id_origen, id_destino FROM proyectos_dependencias WHERE tipo_origen = 'tarea' AND tipo_destino = 'tarea'";
+                            $stmtDeps = Database::getInstance()->query($sqlDeps);
+                            $dependencias = $stmtDeps->fetchAll(PDO::FETCH_ASSOC);
+                            
+                            // Identificar tareas raíz (no tienen predecesoras)
+                            $tareasConPredecesora = array_column($dependencias, 'id_destino');
+                            $tareasRaiz = array_filter($tareas, fn($t) => !in_array($t['id'], $tareasConPredecesora));
+                            
+                            // Si no hay dependencias definidas, mostrar mensaje
+                            if (empty($dependencias)) {
+                                echo '<div class="no-dependencies-msg">';
+                                echo '<i class="bi bi-diagram-3"></i>';
+                                echo '<p>No hay dependencias definidas entre las tareas.</p>';
+                                echo '<small class="text-muted">El equipo puede definir dependencias para mostrar el flujo de trabajo.</small>';
+                                echo '</div>';
+                            } else {
+                                $renderedIds = [];
+                                echo renderDependencyTreeVisualCX($tareasRaiz, $tareas, $dependencias, false, $renderedIds);
+                                
+                                // Mostrar tareas huérfanas (que no están en ninguna jerarquía)
+                                $tareasHuerfanas = array_filter($tareas, fn($t) => !in_array($t['id'], $renderedIds));
+                                if (!empty($tareasHuerfanas)) {
+                                    echo '<div class="mt-4 pt-3 border-top">';
+                                    echo '<h6 class="text-muted mb-3"><i class="bi bi-box me-2"></i>Tareas sin dependencias</h6>';
+                                    echo renderDependencyTreeVisualCX($tareasHuerfanas, $tareas, $dependencias, false, $renderedIds);
+                                    echo '</div>';
+                                }
+                            }
+                            ?>
+                        </div>
+                        
+                        <!-- Leyenda -->
+                        <div class="tree-legend mt-4 pt-3 border-top">
+                            <h6 class="mb-3" style="color: var(--text-secondary)">Leyenda</h6>
+                            <div class="d-flex flex-wrap gap-4">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-circle" style="color: #6c757d"></i>
+                                    <span>Pendiente</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-play-circle-fill" style="color: #55A5C8"></i>
+                                    <span>En Progreso</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-check-circle-fill" style="color: #9AD082"></i>
+                                    <span>Completada</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-exclamation-circle-fill" style="color: #dc3545"></i>
+                                    <span>Bloqueada</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-lock-fill" style="color: #ffc107"></i>
+                                    <span>Requiere predecesora</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Asegurar que el modal esté sobre todo */
+body.modal-open .cx-navbar {
+    z-index: 999 !important;
+}
+#modalArbolDependencias {
+    z-index: 9999 !important;
+}
+
+/* Estilos para el árbol de dependencias */
+.dependency-tree-container {
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    overflow-x: auto;
+}
+
+.dependency-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: fit-content;
+    padding-left: 20px;
+}
+
+.tree-node {
+    position: relative;
+    padding: 6px 0;
+}
+
+/* Línea horizontal hacia el nodo */
+.tree-node.has-parent::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 24px;
+    width: 20px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--border-color), var(--primary-blue));
+}
+
+/* Línea vertical conectora */
+.tree-children > .tree-node::after {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 0;
+    width: 2px;
+    height: 24px;
+    background: var(--border-color);
+}
+
+.tree-children > .tree-node:last-child::after {
+    height: 24px;
+}
+
+/* Link clickeable */
+a.tree-node-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    text-decoration: none;
+}
+
+a.tree-node-content:hover {
+    transform: translateX(8px);
+    border-color: var(--primary-blue);
+    box-shadow: 0 4px 20px rgba(85, 165, 200, 0.35);
+}
+
+a.tree-node-content:hover .tree-node-name {
+    color: var(--primary-blue);
+}
+
+.tree-node.completed a.tree-node-content {
+    border-color: rgba(154, 208, 130, 0.5);
+    background: rgba(154, 208, 130, 0.05);
+}
+
+.tree-node.completed a.tree-node-content:hover {
+    border-color: #9AD082;
+    box-shadow: 0 4px 20px rgba(154, 208, 130, 0.35);
+}
+
+.tree-node.blocked a.tree-node-content {
+    border-color: rgba(220, 53, 69, 0.5);
+    background: rgba(220, 53, 69, 0.05);
+}
+
+.tree-node.blocked a.tree-node-content:hover {
+    border-color: #dc3545;
+    box-shadow: 0 4px 20px rgba(220, 53, 69, 0.35);
+}
+
+.tree-node.in-progress a.tree-node-content {
+    border-color: rgba(85, 165, 200, 0.5);
+    background: rgba(85, 165, 200, 0.05);
+}
+
+.tree-node-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.tree-node-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.3s ease;
+}
+
+.tree-node-badge {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    flex-shrink: 0;
+}
+
+.tree-node-warning {
+    color: #ffc107;
+    font-size: 14px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.tree-children {
+    margin-top: 0;
+    padding-left: 40px;
+    position: relative;
+}
+
+/* Línea vertical que conecta todos los hijos */
+.tree-children::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    width: 2px;
+    height: calc(100% - 24px);
+    background: var(--border-color);
+}
+
+.tree-legend {
+    color: var(--text-secondary);
+}
+
+.tree-legend span {
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+/* Sin dependencias */
+.no-dependencies-msg {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-muted);
+}
+
+.no-dependencies-msg i {
+    font-size: 48px;
+    margin-bottom: 15px;
+    display: block;
+    opacity: 0.5;
+}
+
+/* Contador de sucesores */
+.tree-node-children-count {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--bg-secondary);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .tree-children {
+        padding-left: 25px;
+    }
+    
+    .tree-children::before {
+        left: 5px;
+    }
+    
+    .tree-node.has-parent::before {
+        left: -20px;
+        width: 15px;
+    }
+    
+    a.tree-node-content {
+        padding: 10px 15px;
+        gap: 8px;
+    }
+    
+    .tree-node-name {
+        font-size: 14px;
+        max-width: 150px;
+    }
+    
+    .tree-node-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modalArbolDependencias');
+    if (!modal) return;
+    
+    // Mover el modal al final del body para evitar problemas de z-index
+    document.body.appendChild(modal);
+    
+    // Crear backdrop personalizado
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop-custom';
+    backdrop.id = 'customBackdropCX';
+    backdrop.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);z-index:9998;backdrop-filter:blur(5px);display:none;';
+    document.body.appendChild(backdrop);
+    
+    // Cuando se abre el modal
+    modal.addEventListener('show.bs.modal', function() {
+        backdrop.style.display = 'block';
+        // Ocultar backdrop de Bootstrap
+        setTimeout(() => {
+            const bsBackdrop = document.querySelector('.modal-backdrop:not(.modal-backdrop-custom)');
+            if (bsBackdrop) {
+                bsBackdrop.style.display = 'none';
+            }
+        }, 10);
+    });
+    
+    // Cuando se cierra el modal
+    modal.addEventListener('hidden.bs.modal', function() {
+        backdrop.style.display = 'none';
+    });
+    
+    // Cerrar al hacer clic en el backdrop personalizado
+    backdrop.addEventListener('click', function() {
+        const bsModal = bootstrap.Modal.getInstance(modal);
+        if (bsModal) {
+            bsModal.hide();
+        }
+    });
+});
+</script>
 

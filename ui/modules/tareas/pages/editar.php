@@ -38,6 +38,9 @@ $proyectos = $proyectoModel->getActiveForSelect();
 $colaboradores = $model->getColaboradoresSelect();
 
 $errors = [];
+// Obtener dependencia actual
+$predecesoraActual = $model->getTareaPredecesora($id);
+
 $formData = [
     'proyecto_id' => $tarea['proyecto_id'],
     'nombre' => $tarea['nombre'],
@@ -47,8 +50,12 @@ $formData = [
     'fecha_fin_real' => $tarea['fecha_fin_real'] ?? '',
     'prioridad' => $tarea['prioridad'] ?? '2',
     'estado' => $tarea['estado'],
-    'asignado_id' => $tarea['asignado_id'] ?? ''
+    'asignado_id' => $tarea['asignado_id'] ?? '',
+    'predecesora_id' => $predecesoraActual ? $predecesoraActual['id'] : ''
 ];
+
+// Obtener tareas predecesoras disponibles
+$tareasPredecesoras = $model->getTareasPredecesoras((int)$tarea['proyecto_id'], $id);
 
 // Procesar formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -77,6 +84,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'estado' => $formData['estado'],
                 'asignado_id' => $formData['asignado_id'] ?: null
             ]);
+            
+            // Actualizar dependencia
+            $predecesoraId = !empty($formData['predecesora_id']) ? (int)$formData['predecesora_id'] : null;
+            $model->setDependencia($id, $predecesoraId);
             
             setFlashMessage('success', 'Tarea actualizada correctamente');
             header('Location: ' . uiModuleUrl('tareas', 'ver', ['id' => $id]));
@@ -174,6 +185,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </option>
                                 <?php endforeach; ?>
                             </select>
+                        </div>
+                        
+                        <!-- Dependencias -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-muted mb-3"><i class="bi bi-diagram-3 me-2"></i>Dependencias</h6>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Depende de (Tarea Predecesora)</label>
+                            <select name="predecesora_id" id="predecesora_id" class="form-select">
+                                <option value="">Sin dependencia - Tarea independiente</option>
+                                <?php foreach ($tareasPredecesoras as $tareaP): ?>
+                                <option value="<?= $tareaP['id'] ?>" <?= $formData['predecesora_id'] == $tareaP['id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($tareaP['nombre']) ?> 
+                                    (<?= $tareaP['estado_texto'] ?>)
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Si selecciona una tarea predecesora, esta tarea no podrá iniciarse hasta que la predecesora esté completada.
+                            </small>
+                            <?php if ($predecesoraActual && $predecesoraActual['estado'] != 3): ?>
+                            <div class="alert alert-warning mt-2 py-2">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                <strong>Bloqueada:</strong> Esta tarea depende de "<?= htmlspecialchars($predecesoraActual['nombre']) ?>" que aún no está completada.
+                            </div>
+                            <?php endif; ?>
                         </div>
                         
                         <!-- Fechas -->
