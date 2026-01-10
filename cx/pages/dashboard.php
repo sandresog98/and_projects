@@ -7,11 +7,13 @@ require_once __DIR__ . '/../../ui/modules/proyectos/models/ProyectoModel.php';
 require_once __DIR__ . '/../../ui/modules/reuniones/models/ReunionModel.php';
 require_once __DIR__ . '/../../ui/modules/empresas/models/EmpresaModel.php';
 require_once __DIR__ . '/../../ui/models/TiempoModel.php';
+require_once __DIR__ . '/../../ui/modules/tareas/models/TareaModel.php';
 
 $proyectoModel = new ProyectoModel();
 $reunionModel = new ReunionModel();
 $empresaModel = new EmpresaModel();
 $tiempoModel = new TiempoModel();
+$tareaModel = new TareaModel();
 
 $empresaId = getCurrentClientEmpresaId();
 $empresa = $empresaId ? $empresaModel->getById($empresaId) : null;
@@ -51,13 +53,35 @@ if ($empresaId && !empty($proyectos)) {
     }
 }
 
-// Combinar datos de proyectos con datos de horas y subtareas
+// Combinar datos de proyectos con datos de horas, subtareas y calcular avance real
 $proyectosConHoras = [];
+$avancesCalculados = [];
+
 foreach ($proyectos as $proyecto) {
     $horasProy = array_filter($horasPorProyecto, fn($h) => $h['id'] == $proyecto['id']);
     $horasProy = !empty($horasProy) ? reset($horasProy) : ['horas_reales' => 0, 'horas_estimadas' => 0, 'total_tareas' => 0];
     
+    // Calcular avance real del proyecto (igual que en ver.php)
+    $tareas = $tareaModel->getByProyecto($proyecto['id']);
+    if ($proyecto['estado'] == 3) {
+        // Proyecto completado = 100%
+        $avanceCalculado = 100;
+    } elseif (count($tareas) > 0) {
+        // Calcular basado en tareas completadas
+        $tareasCompletadas = count(array_filter($tareas, fn($t) => $t['estado'] == 3));
+        $avanceCalculado = round(($tareasCompletadas / count($tareas)) * 100);
+    } elseif ($proyecto['estado'] == 2) {
+        // En progreso sin tareas
+        $avanceCalculado = 50;
+    } else {
+        // Usar valor de BD o 0
+        $avanceCalculado = (float)($proyecto['avance'] ?? 0);
+    }
+    
+    $avancesCalculados[] = $avanceCalculado;
+    
     $proyectosConHoras[] = array_merge($proyecto, [
+        'avance' => $avanceCalculado, // Usar el avance calculado
         'horas_reales' => $horasProy['horas_reales'] ?? 0,
         'horas_estimadas' => $horasProy['horas_estimadas'] ?? 0,
         'total_tareas' => $horasProy['total_tareas'] ?? ($proyecto['total_tareas'] ?? 0),
@@ -76,12 +100,8 @@ $totalProyectos = count($proyectos);
 $proyectosActivos = count(array_filter($proyectos, fn($p) => $p['estado'] == 2));
 $proyectosCompletados = count(array_filter($proyectos, fn($p) => $p['estado'] == 3));
 
-// Calcular avance promedio correctamente (filtrar NULLs y usar valores numéricos)
-$avances = array_filter(array_map(function($p) {
-    $avance = $p['avance'] ?? 0;
-    return is_numeric($avance) ? (float)$avance : 0;
-}, $proyectos), fn($a) => $a >= 0);
-$avancePromedio = count($avances) > 0 ? round(array_sum($avances) / count($avances), 1) : 0;
+// Calcular avance promedio usando los avances calculados
+$avancePromedio = count($avancesCalculados) > 0 ? round(array_sum($avancesCalculados) / count($avancesCalculados), 1) : 0;
 
 // Funciones helper para estados
 if (!function_exists('getStatusText')) {
@@ -173,22 +193,8 @@ if (!function_exists('getStatusClass')) {
             <div class="card-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
                 <div>
                     <h6 class="mb-0"><i class="bi bi-kanban me-2"></i>Mis Proyectos</h6>
-                    <?php if ($empresaId): ?>
-                    <small class="text-muted">Resumen de horas y progreso de proyectos</small>
-                    <?php endif; ?>
+                    <small class="text-muted">Progreso y detalles de tus proyectos</small>
                 </div>
-                <?php if ($empresaId): ?>
-                <div class="d-flex gap-4">
-                    <div class="text-center">
-                        <div class="h5 h4-md mb-0" style="color: var(--accent-info);"><?= TiempoModel::formatHoras($horasEmpresa['horas_reales']) ?></div>
-                        <small class="text-muted">Horas Registradas</small>
-                    </div>
-                    <div class="text-center">
-                        <div class="h5 h4-md mb-0" style="color: var(--accent-warning);"><?= TiempoModel::formatHoras($horasEmpresa['horas_estimadas']) ?></div>
-                        <small class="text-muted">Horas Estimadas</small>
-                    </div>
-                </div>
-                <?php endif; ?>
                 <a href="<?= cxModuleUrl('proyectos') ?>" class="btn btn-sm btn-outline-primary">Ver todos</a>
             </div>
             <div class="card-body p-0">
@@ -219,10 +225,10 @@ if (!function_exists('getStatusClass')) {
                         <div class="mb-2">
                             <div class="d-flex justify-content-between mb-1">
                                 <small class="text-muted">Avance del Proyecto</small>
-                                <strong style="font-size: 12px;"><?= $proy['avance'] ?>%</strong>
+                                <strong style="font-size: 12px;"><?= number_format($proy['avance'], 1) ?>%</strong>
                             </div>
                             <div class="progress" style="height: 4px;">
-                                <div class="progress-bar" style="width: <?= $proy['avance'] ?>%"></div>
+                                <div class="progress-bar" style="width: <?= min(100, max(0, $proy['avance'])) ?>%"></div>
                             </div>
                         </div>
                         
@@ -304,9 +310,9 @@ if (!function_exists('getStatusClass')) {
                                     <td style="width: 150px;">
                                         <div class="d-flex align-items-center gap-2">
                                             <div class="progress flex-grow-1" style="height: 6px;">
-                                                <div class="progress-bar" style="width: <?= $proy['avance'] ?>%"></div>
+                                                <div class="progress-bar" style="width: <?= min(100, max(0, $proy['avance'])) ?>%"></div>
                                             </div>
-                                            <small class="text-muted" style="min-width: 40px;"><?= $proy['avance'] ?>%</small>
+                                            <small class="text-muted" style="min-width: 40px;"><?= number_format($proy['avance'], 1) ?>%</small>
                                         </div>
                                     </td>
                                     <td class="text-center">
