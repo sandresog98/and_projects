@@ -26,7 +26,32 @@ $proyectos = $proyectoModel->getAll([
     'exclude_cancelled' => true
 ]);
 
-// Combinar datos de proyectos con datos de horas
+// Obtener total de subtareas por proyecto
+require_once __DIR__ . '/../../config/database.php';
+$subtareasPorProyecto = [];
+if ($empresaId && !empty($proyectos)) {
+    $db = Database::getInstance();
+    $proyectoIds = array_column($proyectos, 'id');
+    if (!empty($proyectoIds)) {
+        $placeholders = implode(',', array_fill(0, count($proyectoIds), '?'));
+        $stmt = $db->prepare("
+            SELECT 
+                t.proyecto_id,
+                COUNT(s.id) as total_subtareas
+            FROM proyectos_tareas t
+            LEFT JOIN proyectos_subtareas s ON t.id = s.tarea_id AND s.estado != 5
+            WHERE t.proyecto_id IN ($placeholders)
+            GROUP BY t.proyecto_id
+        ");
+        $stmt->execute($proyectoIds);
+        $result = $stmt->fetchAll();
+        foreach ($result as $row) {
+            $subtareasPorProyecto[$row['proyecto_id']] = (int)$row['total_subtareas'];
+        }
+    }
+}
+
+// Combinar datos de proyectos con datos de horas y subtareas
 $proyectosConHoras = [];
 foreach ($proyectos as $proyecto) {
     $horasProy = array_filter($horasPorProyecto, fn($h) => $h['id'] == $proyecto['id']);
@@ -35,7 +60,8 @@ foreach ($proyectos as $proyecto) {
     $proyectosConHoras[] = array_merge($proyecto, [
         'horas_reales' => $horasProy['horas_reales'] ?? 0,
         'horas_estimadas' => $horasProy['horas_estimadas'] ?? 0,
-        'total_tareas' => $horasProy['total_tareas'] ?? ($proyecto['total_tareas'] ?? 0)
+        'total_tareas' => $horasProy['total_tareas'] ?? ($proyecto['total_tareas'] ?? 0),
+        'total_subtareas' => $subtareasPorProyecto[$proyecto['id']] ?? 0
     ]);
 }
 
@@ -49,7 +75,13 @@ if ($empresaId) {
 $totalProyectos = count($proyectos);
 $proyectosActivos = count(array_filter($proyectos, fn($p) => $p['estado'] == 2));
 $proyectosCompletados = count(array_filter($proyectos, fn($p) => $p['estado'] == 3));
-$avancePromedio = $totalProyectos > 0 ? round(array_sum(array_column($proyectos, 'avance')) / $totalProyectos, 1) : 0;
+
+// Calcular avance promedio correctamente (filtrar NULLs y usar valores numéricos)
+$avances = array_filter(array_map(function($p) {
+    $avance = $p['avance'] ?? 0;
+    return is_numeric($avance) ? (float)$avance : 0;
+}, $proyectos), fn($a) => $a >= 0);
+$avancePromedio = count($avances) > 0 ? round(array_sum($avances) / count($avances), 1) : 0;
 
 // Funciones helper para estados
 if (!function_exists('getStatusText')) {
@@ -194,26 +226,32 @@ if (!function_exists('getStatusClass')) {
                             </div>
                         </div>
                         
-                        <!-- Horas -->
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="d-flex gap-3">
-                                <span class="text-muted" style="font-size: 12px;">
-                                    <i class="bi bi-clock me-1" style="color: var(--accent-info);"></i>
-                                    <?= TiempoModel::formatHoras($proy['horas_reales']) ?> / <?= TiempoModel::formatHoras($proy['horas_estimadas']) ?>
-                                </span>
-                                <span class="text-muted" style="font-size: 12px;">
-                                    <i class="bi bi-list-task me-1"></i><?= $proy['total_tareas'] ?> tareas
-                                </span>
+                        <!-- Tareas y Subtareas (Principal) -->
+                        <div class="d-flex gap-3 mb-2">
+                            <div class="d-flex align-items-center gap-1">
+                                <i class="bi bi-list-task" style="color: var(--accent-info); font-size: 14px;"></i>
+                                <strong style="font-size: 13px; color: var(--text-primary);"><?= $proy['total_tareas'] ?></strong>
+                                <span class="text-muted" style="font-size: 12px;">tareas</span>
                             </div>
-                            <?php if ($proy['horas_estimadas'] > 0): ?>
-                            <span class="<?= $porcentajeHoras > 100 ? 'text-danger' : 'text-muted' ?>" style="font-size: 12px; font-weight: 600;"><?= $porcentajeHoras ?>%</span>
+                            <?php if ($proy['total_subtareas'] > 0): ?>
+                            <div class="d-flex align-items-center gap-1">
+                                <i class="bi bi-list-check" style="color: var(--accent-success); font-size: 14px;"></i>
+                                <strong style="font-size: 13px; color: var(--text-primary);"><?= $proy['total_subtareas'] ?></strong>
+                                <span class="text-muted" style="font-size: 12px;">subtareas</span>
+                            </div>
                             <?php endif; ?>
                         </div>
                         
-                        <!-- Progreso de horas -->
-                        <?php if ($proy['horas_estimadas'] > 0): ?>
-                        <div class="progress" style="height: 4px;">
-                            <div class="progress-bar <?= $porcentajeHoras > 100 ? 'bg-danger' : '' ?>" style="width: <?= min($porcentajeHoras, 100) ?>%"></div>
+                        <!-- Horas (Secundario - más pequeño) -->
+                        <?php if ($proy['horas_estimadas'] > 0 || $proy['horas_reales'] > 0): ?>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted" style="font-size: 11px;">
+                                <i class="bi bi-clock me-1"></i>
+                                <?= TiempoModel::formatHoras($proy['horas_reales']) ?> / <?= TiempoModel::formatHoras($proy['horas_estimadas']) ?>
+                            </span>
+                            <?php if ($proy['horas_estimadas'] > 0): ?>
+                            <span class="<?= $porcentajeHoras > 100 ? 'text-danger' : 'text-muted' ?>" style="font-size: 11px;"><?= $porcentajeHoras ?>%</span>
+                            <?php endif; ?>
                         </div>
                         <?php endif; ?>
                     </div>
@@ -227,12 +265,17 @@ if (!function_exists('getStatusClass')) {
                             <thead>
                                 <tr>
                                     <th>Proyecto</th>
-                                    <th class="text-center">Avance</th>
                                     <th class="text-center">Estado</th>
-                                    <th class="text-center">Tareas</th>
-                                    <th class="text-center">Horas Registradas</th>
-                                    <th class="text-center">Horas Estimadas</th>
-                                    <th style="width: 180px;">Progreso Horas</th>
+                                    <th class="text-center">Avance</th>
+                                    <th class="text-center" style="min-width: 100px;">
+                                        <i class="bi bi-list-task me-1"></i>Tareas
+                                    </th>
+                                    <th class="text-center" style="min-width: 120px;">
+                                        <i class="bi bi-list-check me-1"></i>Subtareas
+                                    </th>
+                                    <th class="text-center" style="min-width: 140px; font-size: 0.85rem; font-weight: 500; color: var(--text-muted);">
+                                        <i class="bi bi-clock me-1"></i>Horas
+                                    </th>
                                     <th style="width: 80px;"></th>
                                 </tr>
                             </thead>
@@ -253,6 +296,11 @@ if (!function_exists('getStatusClass')) {
                                             </div>
                                         </div>
                                     </td>
+                                    <td class="text-center">
+                                        <span class="badge badge-status-<?= $proy['estado'] ?>">
+                                            <?= getStatusText($proy['estado']) ?>
+                                        </span>
+                                    </td>
                                     <td style="width: 150px;">
                                         <div class="d-flex align-items-center gap-2">
                                             <div class="progress flex-grow-1" style="height: 6px;">
@@ -262,24 +310,30 @@ if (!function_exists('getStatusClass')) {
                                         </div>
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge badge-status-<?= $proy['estado'] ?>">
-                                            <?= getStatusText($proy['estado']) ?>
-                                        </span>
-                                    </td>
-                                    <td class="text-center"><?= $proy['total_tareas'] ?></td>
-                                    <td class="text-center">
-                                        <span style="color: var(--accent-info);"><?= TiempoModel::formatHoras($proy['horas_reales']) ?></span>
+                                        <div class="d-flex flex-column align-items-center">
+                                            <strong style="font-size: 1.1rem; color: var(--accent-info);"><?= $proy['total_tareas'] ?></strong>
+                                            <small class="text-muted" style="font-size: 0.75rem;">tareas</small>
+                                        </div>
                                     </td>
                                     <td class="text-center">
-                                        <span class="text-muted"><?= TiempoModel::formatHoras($proy['horas_estimadas']) ?></span>
+                                        <div class="d-flex flex-column align-items-center">
+                                            <strong style="font-size: 1.1rem; color: var(--accent-success);"><?= $proy['total_subtareas'] ?></strong>
+                                            <small class="text-muted" style="font-size: 0.75rem;">subtareas</small>
+                                        </div>
                                     </td>
-                                    <td>
-                                        <?php if ($proy['horas_estimadas'] > 0): ?>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="progress flex-grow-1" style="height: 6px;">
-                                                <div class="progress-bar <?= $porcentajeHoras > 100 ? 'bg-danger' : '' ?>" style="width: <?= min($porcentajeHoras, 100) ?>%"></div>
+                                    <td class="text-center">
+                                        <?php if ($proy['horas_estimadas'] > 0 || $proy['horas_reales'] > 0): ?>
+                                        <div class="d-flex flex-column align-items-center" style="font-size: 0.85rem;">
+                                            <div>
+                                                <span style="color: var(--accent-info);"><?= TiempoModel::formatHoras($proy['horas_reales']) ?></span>
+                                                <span class="text-muted"> / </span>
+                                                <span class="text-muted"><?= TiempoModel::formatHoras($proy['horas_estimadas']) ?></span>
                                             </div>
-                                            <small class="text-muted" style="min-width: 35px;"><?= $porcentajeHoras ?>%</small>
+                                            <?php if ($proy['horas_estimadas'] > 0): ?>
+                                            <small class="<?= $porcentajeHoras > 100 ? 'text-danger' : 'text-muted' ?>" style="font-size: 0.7rem;">
+                                                <?= $porcentajeHoras ?>%
+                                            </small>
+                                            <?php endif; ?>
                                         </div>
                                         <?php else: ?>
                                         <span class="text-muted small">-</span>
