@@ -497,15 +497,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comentario'])) {
                             $tareasConPredecesora = array_column($dependencias, 'id_destino');
                             $tareasRaiz = array_filter($tareas, fn($t) => !in_array($t['id'], $tareasConPredecesora));
                             
-                            // Si no hay dependencias definidas, mostrar mensaje
-                            if (empty($dependencias)) {
-                                echo '<div class="no-dependencies-msg">';
-                                echo '<i class="bi bi-diagram-3"></i>';
-                                echo '<p>No hay dependencias definidas entre las tareas.</p>';
-                                echo '<small class="text-muted">Puedes crear dependencias al editar o crear tareas.</small>';
-                                echo '</div>';
-                            } else {
-                                $renderedIds = [];
+                            $renderedIds = [];
+                            
+                            // Si hay dependencias definidas, mostrar el árbol con jerarquía
+                            if (!empty($dependencias)) {
                                 echo renderDependencyTreeVisual($tareasRaiz, $tareas, $dependencias, false, $renderedIds);
                                 
                                 // Mostrar tareas huérfanas (que no están en ninguna jerarquía)
@@ -516,6 +511,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comentario'])) {
                                     echo renderDependencyTreeVisual($tareasHuerfanas, $tareas, $dependencias, false, $renderedIds);
                                     echo '</div>';
                                 }
+                            } else {
+                                // Si no hay dependencias definidas, mostrar todas las tareas como ramas libres
+                                echo '<div class="mb-3">';
+                                echo '<h6 class="text-muted mb-3"><i class="bi bi-box me-2"></i>Tareas sin dependencias</h6>';
+                                echo '</div>';
+                                echo renderDependencyTreeVisual($tareas, $tareas, [], false, $renderedIds);
                             }
                             ?>
                         </div>
